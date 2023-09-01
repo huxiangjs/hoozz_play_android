@@ -1,7 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.hoozz_play">
    <application
-        android:label="hoozz_play"
+        android:label="Hoozz Play"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
