@@ -14,7 +14,7 @@ class HoozzPlayApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Hoozz Play',
-      theme: app_theme(),
+      theme: appTheme(),
       routes: {
         '/': (context) => const HoozzPlayHomePage(),
         '/home': (context) => const HoozzPlayHomePage(),

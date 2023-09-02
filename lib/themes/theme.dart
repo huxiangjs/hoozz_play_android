@@ -6,13 +6,14 @@ const Color mainTextColor = Colors.black;
 const Color subTextColor = Color.fromARGB(0xff, 0x6f, 0x6f, 0x6f);
 const String mainFontFamily = 'YouSheBiaoTiHei';
 const String subFontFamily = 'Droid Sans Fallback';
+const Color mainBackgroundColor = const Color.fromARGB(0xef, 0xff, 0xff, 0xff);
 
-ThemeData app_theme() {
+ThemeData appTheme() {
   return ThemeData(
     primarySwatch: mainFillColor,
     fontFamily: mainFontFamily,
     /* Background color */
-    scaffoldBackgroundColor: const Color.fromARGB(0xef, 0xff, 0xff, 0xff),
+    scaffoldBackgroundColor: mainBackgroundColor,
     /* Text color */
     textTheme: const TextTheme(
         // titleLarge: TextStyle(fontSize: 32, color: mainTextColor),
@@ -26,10 +27,11 @@ ThemeData app_theme() {
       systemOverlayStyle: SystemUiOverlayStyle(statusBarColor: mainFillColor),
       // elevation: 0,
       titleTextStyle: TextStyle(
-          fontSize: 22,
-          color: Colors.white,
-          fontFamily: subFontFamily,
-          fontWeight: FontWeight.bold),
+        fontSize: 22,
+        color: Colors.white,
+        fontFamily: subFontFamily,
+        fontWeight: FontWeight.bold,
+      ),
       color: mainFillColor,
       iconTheme: IconThemeData(color: Colors.white),
     ),
@@ -44,5 +46,10 @@ ThemeData app_theme() {
     listTileTheme: const ListTileThemeData(
       textColor: mainTextColor,
     ),
+    radioTheme: RadioThemeData(
+      fillColor: MaterialStateProperty.all(mainFillColor),
+      visualDensity: VisualDensity.compact,
+    ),
+    iconTheme: const IconThemeData(size: 30),
   );
 }
