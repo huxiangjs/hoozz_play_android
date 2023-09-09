@@ -2,6 +2,8 @@
 
 Hoozz Play is a fun application through which all supported hardware will be used.
 
+This is a sub-repository, and the main repository is located at [Hoozz Play](https://github.com/huxiangjs/hoozz_play)
+
 ## How to build?
 
 This application is created based on Flutter, so you need to choose a version of the Flutter development environment to build. You can refer to the following versions:
