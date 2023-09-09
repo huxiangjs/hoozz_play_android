@@ -1,16 +1,22 @@
+///
+/// Created on 2023/09/03
+///
+/// Author: Hoozz (huxiangjs@foxmail.com)
+///
+
 import 'package:flutter/material.dart';
 
 class HoozzPlayHomePage extends StatefulWidget {
   const HoozzPlayHomePage({super.key});
 
-  final String title = 'Hoozz Play Home Page';
+  final String title = 'Hoozz Play Home';
 
   @override
   State<HoozzPlayHomePage> createState() => _HoozzPlayHomePageState();
 }
 
 class _HoozzPlayHomePageState extends State<HoozzPlayHomePage> {
-  Widget generateItem(String desc, String imgName) {
+  Widget _generateItem(String desc, String imgName) {
     return InkWell(
       onTap: () {
         /* Routing Jump */
@@ -52,6 +58,11 @@ class _HoozzPlayHomePageState extends State<HoozzPlayHomePage> {
   }
 
   @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -67,7 +78,7 @@ class _HoozzPlayHomePageState extends State<HoozzPlayHomePage> {
           childAspectRatio: 0.85,
         ),
         children: [
-          generateItem('MLX90640', 'images/product_view_mlx90640.png'),
+          _generateItem('MLX90640', 'images/product_view_mlx90640.png'),
         ],
       ),
     );
