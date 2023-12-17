@@ -4,6 +4,7 @@
 *.pyc
 *.swp
 *.code-workspace
+*.lock
 .DS_Store
 .atom/
 .buildlog/

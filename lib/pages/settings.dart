@@ -31,6 +31,7 @@ class _HoozzPlaySettingsPageState extends State<HoozzPlaySettingsPage> {
 
   final List<_ItemInfo> _itemList = [
     _ItemInfo(Icons.info_outline, 'About', '/about'),
+    _ItemInfo(Icons.people_outline, 'Author', '/author'),
     _ItemInfo(Icons.contact_page_outlined, 'License', '/license'),
   ];
 
