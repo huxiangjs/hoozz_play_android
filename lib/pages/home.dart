@@ -68,6 +68,17 @@ class _HoozzPlayHomePageState extends State<HoozzPlayHomePage> {
       appBar: AppBar(
         toolbarHeight: 64,
         title: Text(widget.title),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.app_settings_alt),
+            onPressed: () {
+              Navigator.pushNamed(
+                context,
+                '/settings',
+              );
+            },
+          ),
+        ],
       ),
       body: GridView(
         padding: const EdgeInsets.fromLTRB(12, 20, 12, 12),

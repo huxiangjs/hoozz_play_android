@@ -7,6 +7,9 @@
 import 'package:flutter/material.dart';
 import 'themes/theme.dart';
 import 'pages/home.dart';
+import 'pages/settings.dart';
+import 'pages/settings_about.dart';
+import 'pages/settings_license.dart';
 import 'pages/mlx90640.dart';
 
 void main() {
@@ -24,6 +27,9 @@ class HoozzPlayApp extends StatelessWidget {
       routes: {
         '/': (context) => const HoozzPlayHomePage(),
         '/home': (context) => const HoozzPlayHomePage(),
+        '/settings': (context) => const HoozzPlaySettingsPage(),
+        '/about': (context) => const HoozzPlayAboutPage(),
+        '/license': (context) => const HoozzPlayLicensePage(),
         '/mlx90640': (context) => const MLX90640HomePage(),
       },
     );
