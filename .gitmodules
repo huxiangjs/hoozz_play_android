@@ -1,0 +1,3 @@
+[submodule "android/app/src/main/cpp/remote_sw/git_things"]
+	path = android/app/src/main/cpp/remote_sw/git_things
+	url = https://github.com/huxiangjs/git_things.git

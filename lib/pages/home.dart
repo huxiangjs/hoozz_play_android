@@ -15,14 +15,30 @@ class HoozzPlayHomePage extends StatefulWidget {
   State<HoozzPlayHomePage> createState() => _HoozzPlayHomePageState();
 }
 
+class _ItemInfo {
+  String icon;
+  String name;
+  String page;
+  _ItemInfo(this.icon, this.name, this.page);
+}
+
 class _HoozzPlayHomePageState extends State<HoozzPlayHomePage> {
-  Widget _generateItem(String desc, String imgName) {
+  final List<_ItemInfo> _itemList = [
+    _ItemInfo('images/product_view_mlx90640.png', 'MLX90640', '/mlx90640'),
+    _ItemInfo(
+      'images/product_view_remote_switch.png',
+      'REMOTE SW',
+      '/remote_sw',
+    ),
+  ];
+
+  Widget _generateItem(int index) {
     return InkWell(
       onTap: () {
         /* Routing Jump */
         Navigator.pushNamed(
           context,
-          '/mlx90640',
+          _itemList[index].page,
           // arguments: {'name': xxx, 'id': xxx},
         );
       },
@@ -46,11 +62,11 @@ class _HoozzPlayHomePageState extends State<HoozzPlayHomePage> {
               borderRadius:
                   const BorderRadius.vertical(top: Radius.circular(8)),
               child: Image.asset(
-                imgName,
+                _itemList[index].icon,
                 fit: BoxFit.cover,
               ),
             ),
-            Text(desc),
+            Text(_itemList[index].name),
           ],
         ),
       ),
@@ -72,15 +88,13 @@ class _HoozzPlayHomePageState extends State<HoozzPlayHomePage> {
           IconButton(
             icon: const Icon(Icons.app_settings_alt),
             onPressed: () {
-              Navigator.pushNamed(
-                context,
-                '/settings',
-              );
+              Navigator.pushNamed(context, '/settings');
             },
           ),
         ],
       ),
-      body: GridView(
+      body: GridView.builder(
+        itemCount: _itemList.length,
         padding: const EdgeInsets.fromLTRB(12, 20, 12, 12),
         gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
           maxCrossAxisExtent: 150.0,
@@ -88,9 +102,7 @@ class _HoozzPlayHomePageState extends State<HoozzPlayHomePage> {
           crossAxisSpacing: 10.0,
           childAspectRatio: 0.85,
         ),
-        children: [
-          _generateItem('MLX90640', 'images/product_view_mlx90640.png'),
-        ],
+        itemBuilder: (context, index) => _generateItem(index),
       ),
     );
   }

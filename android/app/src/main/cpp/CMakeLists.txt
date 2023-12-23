@@ -12,3 +12,6 @@ cmake_minimum_required(VERSION 3.22.1)
 
 # MLX90640
 ADD_SUBDIRECTORY(${PROJECT_SOURCE_DIR}/mlx90640)
+
+# Remote Switch
+ADD_SUBDIRECTORY(${PROJECT_SOURCE_DIR}/remote_sw)
