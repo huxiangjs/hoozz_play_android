@@ -82,7 +82,6 @@ class _HoozzPlayHomePageState extends State<HoozzPlayHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        toolbarHeight: 64,
         title: Text(widget.title),
         actions: [
           IconButton(

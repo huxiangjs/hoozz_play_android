@@ -85,4 +85,7 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 
     implementation 'com.github.felHR85:UsbSerial:6.1.0'
+
+    // esp touch smart config
+    implementation project(':esptouch')
 }

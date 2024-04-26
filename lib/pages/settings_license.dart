@@ -34,7 +34,6 @@ class _HoozzPlayLicensePageState extends State<HoozzPlayLicensePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        toolbarHeight: 64,
         title: Text(widget.title),
       ),
       body: SingleChildScrollView(

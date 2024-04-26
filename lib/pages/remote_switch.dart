@@ -68,7 +68,6 @@ class _AddDevicePageWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        toolbarHeight: 64,
         title: const Text("Add new device"),
       ),
       body: SingleChildScrollView(
@@ -281,7 +280,6 @@ class _CtrlDevicePageState extends State<_CtrlDevicePageWidget> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        toolbarHeight: 64,
         title: Text(widget._nickName),
         actions: [
           // Refresh device
@@ -496,7 +494,6 @@ class _RemoteSwitchHomePageState extends State<RemoteSwitchHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        toolbarHeight: 64,
         title: Text(widget.title),
         actions: [
           // Add device button

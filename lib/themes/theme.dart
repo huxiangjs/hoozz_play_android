@@ -30,6 +30,7 @@ ThemeData appTheme() {
         // bodySmall: TextStyle(fontSize: 15, color: mainTextColor),
         ),
     appBarTheme: const AppBarTheme(
+      toolbarHeight: 80,
       systemOverlayStyle: SystemUiOverlayStyle(statusBarColor: mainFillColor),
       // elevation: 0,
       titleTextStyle: TextStyle(

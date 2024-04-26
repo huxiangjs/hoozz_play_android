@@ -49,7 +49,6 @@ class _HoozzPlayAboutPageState extends State<HoozzPlayAboutPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        toolbarHeight: 64,
         title: Text(widget.title),
       ),
       body: SingleChildScrollView(
@@ -57,14 +56,16 @@ class _HoozzPlayAboutPageState extends State<HoozzPlayAboutPage> {
         padding: const EdgeInsets.fromLTRB(4, 60, 4, 60),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Image.asset(
               'images/app_icon.png',
-              fit: BoxFit.cover,
+              // fit: BoxFit.fill,
             ),
             const SizedBox(height: 10),
             Text(
               _appName,
+              textAlign: TextAlign.center,
               style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 10),

@@ -22,6 +22,7 @@ import io.flutter.plugin.common.MethodChannel.MethodCallHandler;
 import io.flutter.plugin.common.MethodChannel.Result;
 
 import com.example.hoozz_play.adapter.MLX90640Adapter;
+import com.example.hoozz_play.adapter.ESPTouchAdapter;
 
 public class MainActivity extends FlutterActivity {
     private final String TAG = MainActivity.class.getSimpleName();
@@ -36,6 +37,7 @@ public class MainActivity extends FlutterActivity {
     @Override
     public void configureFlutterEngine(@NonNull FlutterEngine flutterEngine) {
         super.configureFlutterEngine(flutterEngine);
+	/* MLX90640 */
         new EventChannel(flutterEngine.getDartExecutor().getBinaryMessenger(), "MLX90640_EVENT")
                 .setStreamHandler(new MLX90640Adapter(getBaseContext()));
         new MethodChannel(flutterEngine.getDartExecutor().getBinaryMessenger(), "MLX90640_METHOD")
@@ -50,6 +52,18 @@ public class MainActivity extends FlutterActivity {
                         */
                         // return to flutter
                         result.success(MLX90640Adapter.callFunction(call.method, call.argument("value")));
+                    }
+                );
+	/* ESP Touch */
+	ESPTouchAdapter espTouchAdapter = new ESPTouchAdapter(getBaseContext());
+	new EventChannel(flutterEngine.getDartExecutor().getBinaryMessenger(), "ESPTOUCH_EVENT")
+                .setStreamHandler(espTouchAdapter);
+        new MethodChannel(flutterEngine.getDartExecutor().getBinaryMessenger(), "ESPTOUCH_METHOD")
+                .setMethodCallHandler(
+                    (call, result) -> {
+                        Log.d(TAG, "call " + call.method);
+                        // return to flutter
+                        result.success(espTouchAdapter.callFunction(call.method, call));
                     }
                 );
         Log.d(TAG, "configureFlutterEngine done");

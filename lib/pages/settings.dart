@@ -30,6 +30,7 @@ class _HoozzPlaySettingsPageState extends State<HoozzPlaySettingsPage> {
   }
 
   final List<_ItemInfo> _itemList = [
+    _ItemInfo(Icons.pan_tool_outlined, 'Tools', '/tools'),
     _ItemInfo(Icons.info_outline, 'About', '/about'),
     _ItemInfo(Icons.people_outline, 'Author', '/author'),
     _ItemInfo(Icons.contact_page_outlined, 'License', '/license'),
@@ -51,14 +52,19 @@ class _HoozzPlaySettingsPageState extends State<HoozzPlaySettingsPage> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Padding(
-                padding: const EdgeInsets.fromLTRB(10, 0, 15, 0),
-                child: Icon(_itemList[index].icon),
+                padding: const EdgeInsets.fromLTRB(10, 5, 15, 5),
+                child: Icon(
+                  _itemList[index].icon,
+                  color: mainFillColor,
+                ),
               ),
               Text(
                 _itemList[index].name,
                 style: const TextStyle(
                   fontSize: 20,
                   fontFamily: subFontFamily,
+                  fontWeight: FontWeight.bold,
+                  color: subTextColor,
                 ),
               ),
             ],
@@ -72,12 +78,11 @@ class _HoozzPlaySettingsPageState extends State<HoozzPlaySettingsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
-          toolbarHeight: 64,
           title: Text(widget.title),
         ),
         body: ListView.builder(
           itemCount: _itemList.length,
-          padding: const EdgeInsets.fromLTRB(0, 10, 0, 10),
+          padding: const EdgeInsets.fromLTRB(5, 10, 5, 10),
           itemBuilder: (context, index) {
             return _generateItem(index);
           },
