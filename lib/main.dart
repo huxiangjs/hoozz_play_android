@@ -15,6 +15,7 @@ import 'pages/settings_license.dart';
 import 'pages/mlx90640.dart';
 import "pages/remote_switch.dart";
 import "pages/tools_esptouch.dart";
+import "pages/voice_led.dart";
 
 void main() {
   runApp(const HoozzPlayApp());
@@ -39,6 +40,7 @@ class HoozzPlayApp extends StatelessWidget {
         '/license': (context) => const HoozzPlayLicensePage(),
         '/mlx90640': (context) => const MLX90640HomePage(),
         "/remote_sw": (context) => const RemoteSwitchHomePage(),
+        "/voice_led": (context) => const VoiceLEDHomePage(),
       },
     );
   }

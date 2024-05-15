@@ -30,6 +30,11 @@ class _HoozzPlayHomePageState extends State<HoozzPlayHomePage> {
       'REMOTE SW',
       '/remote_sw',
     ),
+    _ItemInfo(
+      'images/product_view_voice_led.png',
+      'VOICE LED',
+      '/voice_led',
+    ),
   ];
 
   Widget _generateItem(int index) {
