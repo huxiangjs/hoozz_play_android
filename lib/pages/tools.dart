@@ -69,30 +69,32 @@ class _HoozzPlayToolsPageState extends State<HoozzPlayToolsPage> {
                   height: 40,
                 ),
               ),
-              Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    _itemList[index].name,
-                    style: const TextStyle(
-                      fontSize: 20,
-                      fontFamily: subFontFamily,
-                      fontWeight: FontWeight.bold,
-                      color: subTextColor,
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _itemList[index].name,
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontFamily: subFontFamily,
+                        fontWeight: FontWeight.bold,
+                        color: subTextColor,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 5),
-                  Text(
-                    _itemList[index].describe,
-                    style: const TextStyle(
-                      fontSize: 10,
-                      fontFamily: subFontFamily,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.grey,
+                    const SizedBox(height: 5),
+                    Text(
+                      _itemList[index].describe,
+                      style: const TextStyle(
+                        fontSize: 10,
+                        fontFamily: subFontFamily,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ],
           ),

@@ -89,29 +89,31 @@ class _EspTouchPageState extends State<EspTouchPage> {
                         color: mainFillColor,
                       ),
                     ),
-                    Column(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          _itemList[index].name,
-                          style: const TextStyle(
-                            fontSize: 20,
-                            fontFamily: subFontFamily,
-                            fontWeight: FontWeight.bold,
-                            color: subTextColor,
+                    Expanded(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _itemList[index].name,
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontFamily: subFontFamily,
+                              fontWeight: FontWeight.bold,
+                              color: subTextColor,
+                            ),
                           ),
-                        ),
-                        Text(
-                          _itemList[index].ip,
-                          style: const TextStyle(
-                            fontSize: 14,
-                            fontFamily: subFontFamily,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.grey,
+                          Text(
+                            _itemList[index].ip,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontFamily: subFontFamily,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
                   ],
                 ),

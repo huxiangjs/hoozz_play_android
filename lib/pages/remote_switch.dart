@@ -443,11 +443,13 @@ class _RemoteSwitchHomePageState extends State<RemoteSwitchHomePage> {
                   ),
                 ),
               ),
-              Text(
-                _deviceList[index].name,
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontFamily: subFontFamily,
+              Expanded(
+                child: Text(
+                  _deviceList[index].name,
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontFamily: subFontFamily,
+                  ),
                 ),
               ),
             ],

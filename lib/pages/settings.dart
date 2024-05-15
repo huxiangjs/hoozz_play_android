@@ -58,13 +58,15 @@ class _HoozzPlaySettingsPageState extends State<HoozzPlaySettingsPage> {
                   color: mainFillColor,
                 ),
               ),
-              Text(
-                _itemList[index].name,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontFamily: subFontFamily,
-                  fontWeight: FontWeight.bold,
-                  color: subTextColor,
+              Expanded(
+                child: Text(
+                  _itemList[index].name,
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontFamily: subFontFamily,
+                    fontWeight: FontWeight.bold,
+                    color: subTextColor,
+                  ),
                 ),
               ),
             ],
