@@ -6,7 +6,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:hoozz_play/themes/theme.dart';
-import '../adapter/remote_switch_adapter.dart';
+import 'package:hoozz_play/adapter/remote_switch_adapter.dart';
 import 'dart:developer' as developer;
 import 'package:shared_preferences/shared_preferences.dart';
 

@@ -6,7 +6,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:hoozz_play/themes/theme.dart';
-import '../core/simple_ctrl.dart';
+import 'package:hoozz_play/core/simple_ctrl.dart';
 import 'dart:developer' as developer;
 import 'package:shared_preferences/shared_preferences.dart';
 

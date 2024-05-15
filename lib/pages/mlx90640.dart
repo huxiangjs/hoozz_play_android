@@ -11,8 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter/rendering.dart';
 import 'package:hoozz_play/themes/theme.dart';
-
-import '../adapter/mlx90640_adapter.dart';
+import 'package:hoozz_play/adapter/mlx90640_adapter.dart';
 
 class MLX90640HomePage extends StatefulWidget {
   const MLX90640HomePage({super.key});
