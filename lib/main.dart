@@ -16,6 +16,7 @@ import 'pages/mlx90640.dart';
 import "pages/remote_switch.dart";
 import "pages/tools_esptouch.dart";
 import "pages/voice_led.dart";
+import "pages/tools_discover.dart";
 
 void main() {
   runApp(const HoozzPlayApp());
@@ -35,6 +36,7 @@ class HoozzPlayApp extends StatelessWidget {
         '/settings': (context) => const HoozzPlaySettingsPage(),
         '/tools': (context) => const HoozzPlayToolsPage(),
         '/tools_esptouch': (context) => const EspTouchPage(),
+        '/tools_discover': (context) => const DiscoverPage(),
         '/about': (context) => const HoozzPlayAboutPage(),
         '/author': (context) => const HoozzPlayAuthorPage(),
         '/license': (context) => const HoozzPlayLicensePage(),

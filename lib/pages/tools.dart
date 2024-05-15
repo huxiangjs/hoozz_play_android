@@ -37,6 +37,12 @@ class _HoozzPlayToolsPageState extends State<HoozzPlayToolsPage> {
       'Smart configuration network',
       '/tools_esptouch',
     ),
+    _ItemInfo(
+      'images/search_icon.png',
+      'Discover',
+      'Discover configured devices',
+      '/tools_discover',
+    ),
   ];
 
   Widget _generateItem(int index) {
