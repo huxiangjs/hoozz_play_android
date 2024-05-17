@@ -17,7 +17,7 @@ class DiscoverDeviceInfo {
   String id;
   String ip;
   int port;
-  String classId;
+  int classId;
   String name;
   DateTime time;
 
@@ -60,9 +60,6 @@ class SimpleCtrl {
   }
 
   Future<void> initDiscover() async {
-    LinkedHashMap<String, DiscoverDeviceInfo> deviceList =
-        deviceListNotifier.deviceList;
-
     if (_discoverRunning) {
       developer.log('Discover is already running', name: _logName);
       return;
@@ -90,14 +87,17 @@ class SimpleCtrl {
             String id = data.substring(start + 2, start + 2 + _idLength);
             String name = data.substring(start + 2 + _idLength);
             DateTime time = DateTime.now();
-            developer.log(
-                '[$ip:$port] CLASS:$classId ID:$id NAME:$name TIME:${time.toString()}',
-                name: _logName);
+            // developer.log(
+            //     '[$ip:$port] CLASS:$classId ID:$id NAME:$name TIME:${time.toString()}',
+            //     name: _logName);
             if (id.length == _idLength) {
+              int classIdNum = int.parse(classId, radix: 16);
               deviceListNotifier.set(
-                  id, DiscoverDeviceInfo(id, ip, port, classId, name, time));
-              developer.log('Device count: ${deviceList.length}',
-                  name: _logName);
+                  id, DiscoverDeviceInfo(id, ip, port, classIdNum, name, time));
+              // LinkedHashMap<String, DiscoverDeviceInfo> deviceList =
+              //     deviceListNotifier.deviceList;
+              // developer.log('Device count: ${deviceList.length}',
+              //     name: _logName);
             }
           }
         } catch (e) {

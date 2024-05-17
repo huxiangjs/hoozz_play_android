@@ -5,6 +5,7 @@
 ///
 
 import 'package:flutter/material.dart';
+import 'package:hoozz_play/core/class_id.dart';
 import 'package:hoozz_play/themes/theme.dart';
 import 'package:hoozz_play/core/simple_ctrl.dart';
 
@@ -29,7 +30,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
         padding: const EdgeInsets.fromLTRB(0, 3, 0, 3),
         child: Card(
           child: Padding(
-            padding: const EdgeInsets.fromLTRB(10, 18, 10, 18),
+            padding: const EdgeInsets.fromLTRB(10, 22, 10, 22),
             child: Stack(
               alignment: Alignment.centerRight,
               children: [
@@ -91,13 +92,30 @@ class _DiscoverPageState extends State<DiscoverPage> {
                     ),
                   ],
                 ),
-                OutlinedButton(
-                  onPressed: () {},
-                  child: const Text(
-                    'Go',
-                    style: TextStyle(color: Colors.green),
+                Visibility(
+                  visible:
+                      ClassList.classIdList[_deviceList[index].classId] != null,
+                  child: OutlinedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) {
+                            ClassBindingWidget page = ClassList
+                                .classIdList[_deviceList[index].classId]!.page;
+                            // Set parameter
+                            page.parameter = _deviceList[index];
+                            return page;
+                          },
+                        ),
+                      ).then((value) {});
+                    },
+                    child: const Text(
+                      'Go',
+                      style: TextStyle(color: Colors.green),
+                    ),
                   ),
-                )
+                ),
               ],
             ),
           ),
