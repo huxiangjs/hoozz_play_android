@@ -18,6 +18,15 @@ class DiscoverPage extends StatefulWidget {
   State<DiscoverPage> createState() => _DiscoverPageState();
 }
 
+class _ConfigDevicePage extends StatefulWidget {
+  final ClassBindingWidgetState _page;
+
+  const _ConfigDevicePage(this._page);
+
+  @override
+  State<StatefulWidget> createState() => _page;
+}
+
 class _DiscoverPageState extends State<DiscoverPage> {
   final SimpleCtrl _simpleCtrl = SimpleCtrl();
 
@@ -101,11 +110,12 @@ class _DiscoverPageState extends State<DiscoverPage> {
                         context,
                         MaterialPageRoute(
                           builder: (context) {
-                            ClassBindingWidget page = ClassList
-                                .classIdList[_deviceList[index].classId]!.page;
+                            ClassBindingWidgetState page = ClassList
+                                .classIdList[_deviceList[index].classId]!
+                                .page();
                             // Set parameter
-                            page.parameter = _deviceList[index];
-                            return page;
+                            page.parameter = [_deviceList[index]];
+                            return _ConfigDevicePage(page);
                           },
                         ),
                       ).then((value) {});

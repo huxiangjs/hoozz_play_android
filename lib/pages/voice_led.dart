@@ -4,6 +4,7 @@
 /// Author: Hoozz (huxiangjs@foxmail.com)
 ///
 
+import 'dart:collection';
 import 'package:flutter/material.dart';
 import 'package:hoozz_play/core/class_id.dart';
 import 'package:hoozz_play/themes/theme.dart';
@@ -20,6 +21,52 @@ class VoiceLEDHomePage extends StatefulWidget {
 
   @override
   State<VoiceLEDHomePage> createState() => _VoiceLEDHomePageState();
+}
+
+class _VoiceLEDDeviceInfo {
+  String nickName = '';
+  String id = '';
+  String accessKey = '';
+}
+
+class _VoiceLEDDeviceInfoStorage {
+  final String _storageName = 'Voice LED';
+  final LinkedHashMap<String, _VoiceLEDDeviceInfo> deviceList =
+      LinkedHashMap<String, _VoiceLEDDeviceInfo>();
+
+  Future<void> save() async {
+    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+
+    int count = 0;
+    for (_VoiceLEDDeviceInfo item in deviceList.values) {
+      sharedPreferences.setStringList('$_storageName: Device$count', [
+        item.nickName,
+        item.id,
+        item.accessKey,
+      ]);
+      count++;
+    }
+
+    sharedPreferences.setInt('$_storageName: Device Count', count);
+    developer.log('$_storageName: Device Count: $count', name: _logName);
+  }
+
+  Future<void> load() async {
+    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
+    int? count = sharedPreferences.getInt('$_storageName: Device Count');
+    count ??= 0;
+    developer.log('$_storageName: Device Count: $count', name: _logName);
+    for (int i = 0; i < count; i++) {
+      List<String>? deviceInfo =
+          sharedPreferences.getStringList('$_storageName: Device$i');
+      deviceInfo ??= [];
+      _VoiceLEDDeviceInfo info = _VoiceLEDDeviceInfo();
+      info.nickName = deviceInfo[0];
+      info.id = deviceInfo[1];
+      info.accessKey = deviceInfo[2];
+      deviceList[info.id] = info;
+    }
+  }
 }
 
 // Home page
@@ -89,14 +136,38 @@ class _DeviceInofInputDecoration extends InputDecoration {
 }
 
 // Config device page
-class VoiceLEDConfigDevicePage extends ClassBindingWidget {
-  String _nickName = '';
-  String _accessKey = '';
+class VoiceLEDConfigDevicePageState extends ClassBindingWidgetState {
+  _VoiceLEDDeviceInfo _deviceInfo = _VoiceLEDDeviceInfo();
+  late DiscoverDeviceInfo _discoverDeviceInfo;
+
+  Future<void> _deviceInfoLoad() async {
+    _VoiceLEDDeviceInfoStorage storage = _VoiceLEDDeviceInfoStorage();
+    await storage.load();
+    if (storage.deviceList[_deviceInfo.id] != null) {
+      _deviceInfo = storage.deviceList[_deviceInfo.id]!;
+    }
+  }
+
+  Future<void> _deviceInfoSave() async {
+    _VoiceLEDDeviceInfoStorage storage = _VoiceLEDDeviceInfoStorage();
+    await storage.load();
+    storage.deviceList[_deviceInfo.id] = _deviceInfo;
+    await storage.save();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    _discoverDeviceInfo = parameter[0] as DiscoverDeviceInfo;
+    _deviceInfo.nickName = _discoverDeviceInfo.name;
+    _deviceInfoLoad().then((value) {
+      setState(() {});
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    DiscoverDeviceInfo info = parameter as DiscoverDeviceInfo;
-
     return Scaffold(
       appBar: AppBar(
         title: const Text("Configure device"),
@@ -114,7 +185,7 @@ class VoiceLEDConfigDevicePage extends ClassBindingWidget {
                   const Text(' NAME: ', style: TextStyle(fontSize: 18)),
                   Expanded(
                     child: Text(
-                      info.name,
+                      _discoverDeviceInfo.name,
                       style: const TextStyle(
                           fontSize: 18, fontFamily: subFontFamily),
                     ),
@@ -129,9 +200,10 @@ class VoiceLEDConfigDevicePage extends ClassBindingWidget {
                   const Text('CLASS: ', style: TextStyle(fontSize: 18)),
                   Expanded(
                     child: Text(
-                      ClassList.classIdList[info.classId] == null
+                      ClassList.classIdList[_discoverDeviceInfo.classId] == null
                           ? 'Unknown'
-                          : ClassList.classIdList[info.classId]!.describe,
+                          : ClassList.classIdList[_discoverDeviceInfo.classId]!
+                              .describe,
                       style: const TextStyle(
                           fontSize: 18, fontFamily: subFontFamily),
                     ),
@@ -146,7 +218,7 @@ class VoiceLEDConfigDevicePage extends ClassBindingWidget {
                   const Text('    ID: ', style: TextStyle(fontSize: 18)),
                   Expanded(
                     child: Text(
-                      info.id,
+                      _discoverDeviceInfo.id,
                       style: const TextStyle(
                           fontSize: 18, fontFamily: subFontFamily),
                     ),
@@ -161,7 +233,7 @@ class VoiceLEDConfigDevicePage extends ClassBindingWidget {
                   const Text('    IP: ', style: TextStyle(fontSize: 18)),
                   Expanded(
                     child: Text(
-                      '${info.ip} : ${info.port}',
+                      '${_discoverDeviceInfo.ip} : ${_discoverDeviceInfo.port}',
                       style: const TextStyle(
                           fontSize: 18, fontFamily: subFontFamily),
                     ),
@@ -173,8 +245,9 @@ class VoiceLEDConfigDevicePage extends ClassBindingWidget {
             Padding(
               padding: const EdgeInsets.all(10),
               child: TextField(
+                controller: TextEditingController(text: _deviceInfo.nickName),
                 onChanged: (value) =>
-                    _nickName = value.replaceAll('\r\n', '\n'),
+                    _deviceInfo.nickName = value.replaceAll('\r\n', '\n'),
                 style: const TextStyle(fontSize: 20, fontFamily: subFontFamily),
                 // maxLines: 2,
                 decoration: _DeviceInofInputDecoration(
@@ -186,8 +259,9 @@ class VoiceLEDConfigDevicePage extends ClassBindingWidget {
             Padding(
               padding: const EdgeInsets.all(10),
               child: TextField(
+                controller: TextEditingController(text: _deviceInfo.accessKey),
                 onChanged: (value) =>
-                    _accessKey = value.replaceAll('\r\n', '\n'),
+                    _deviceInfo.accessKey = value.replaceAll('\r\n', '\n'),
                 style: const TextStyle(fontSize: 20, fontFamily: subFontFamily),
                 // maxLines: 2,
                 keyboardType: TextInputType.multiline,
@@ -204,8 +278,10 @@ class VoiceLEDConfigDevicePage extends ClassBindingWidget {
                   minimumSize: const Size(double.infinity, 50),
                 ),
                 onPressed: () {
-                  developer.log('Nick name: $_nickName', name: _logName);
-                  developer.log('Access key: $_accessKey', name: _logName);
+                  developer.log('Nick name: ${_deviceInfo.nickName}',
+                      name: _logName);
+                  developer.log('Access key: ${_deviceInfo.accessKey}',
+                      name: _logName);
 
                   showDialog(
                     context: context,
@@ -231,6 +307,7 @@ class VoiceLEDConfigDevicePage extends ClassBindingWidget {
 
                   Future.delayed(const Duration(seconds: 3, milliseconds: 0))
                       .then((value) {
+                    _deviceInfoSave();
                     Navigator.pop(context);
                   });
                 },

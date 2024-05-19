@@ -372,6 +372,8 @@ class RemoteSwitchHomePage extends StatefulWidget {
 
 // Home page
 class _RemoteSwitchHomePageState extends State<RemoteSwitchHomePage> {
+  final String _storageName = 'Remote Switch';
+
   @override
   void initState() {
     super.initState();
@@ -461,11 +463,12 @@ class _RemoteSwitchHomePageState extends State<RemoteSwitchHomePage> {
 
   void _deviceInfoLoad() {
     SharedPreferences.getInstance().then((value) {
-      int? count = value.getInt('Device Count');
+      int? count = value.getInt('$_storageName: Device Count');
       count ??= 0;
-      developer.log('Device Count: $count', name: _logName);
+      developer.log('$_storageName: Device Count: $count', name: _logName);
       for (int i = 0; i < count; i++) {
-        List<String>? deviceInfo = value.getStringList('Device$i');
+        List<String>? deviceInfo =
+            value.getStringList('$_storageName: Device$i');
         deviceInfo ??= [];
         if (deviceInfo.length == 3) {
           setState(() {
@@ -480,15 +483,16 @@ class _RemoteSwitchHomePageState extends State<RemoteSwitchHomePage> {
   void _deviceInfoSave() {
     SharedPreferences.getInstance().then((value) {
       for (int i = 0; i < _deviceList.length; i++) {
-        value.setStringList('Device$i', [
+        value.setStringList('$_storageName: Device$i', [
           _deviceList[i].name,
           _deviceList[i].repository,
           _deviceList[i].privkey
         ]);
       }
 
-      value.setInt('Device Count', _deviceList.length);
-      developer.log('Device Count: ${_deviceList.length}', name: _logName);
+      value.setInt('$_storageName: Device Count', _deviceList.length);
+      developer.log('$_storageName: Device Count: ${_deviceList.length}',
+          name: _logName);
     });
   }
 
