@@ -4,6 +4,7 @@
 /// Author: Hoozz (huxiangjs@foxmail.com)
 ///
 
+import 'dart:async';
 import 'dart:collection';
 import 'package:flutter/material.dart';
 import 'package:hoozz_play/core/class_id.dart';
@@ -52,6 +53,7 @@ class _VoiceLEDDeviceInfoStorage {
   }
 
   Future<void> load() async {
+    deviceList.clear();
     SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
     int? count = sharedPreferences.getInt('$_storageName: Device Count');
     count ??= 0;
@@ -72,11 +74,122 @@ class _VoiceLEDDeviceInfoStorage {
 // Home page
 class _VoiceLEDHomePageState extends State<VoiceLEDHomePage> {
   final SimpleCtrl _simpleCtrl = SimpleCtrl();
+  final List<_VoiceLEDDeviceInfo> _deviceList = [];
+  final int _deviceRefreshTime = 1;
+  final int _deviceOnlineTimeout = 30;
+  late Timer _refreshTimer;
+
+  Future<void> refreshDeviceList() async {
+    _deviceList.clear();
+
+    final _VoiceLEDDeviceInfoStorage deviceInfoStorage =
+        _VoiceLEDDeviceInfoStorage();
+    await deviceInfoStorage.load();
+
+    for (_VoiceLEDDeviceInfo item in deviceInfoStorage.deviceList.values) {
+      _deviceList.add(item);
+    }
+  }
+
+  void _refreshDeviceState(Timer timer) => setState(() {});
 
   @override
   void initState() {
     super.initState();
     _simpleCtrl.initDiscover();
+    // Listen update
+    // _simpleCtrl.deviceListNotifier.addListener(() => setState(() {}));
+    // Regular refresh
+    _refreshTimer = Timer.periodic(
+        Duration(seconds: _deviceRefreshTime), _refreshDeviceState);
+
+    // Load device info
+    refreshDeviceList().then((value) => setState(() {}));
+  }
+
+  Widget _generateItem(int index) {
+    _VoiceLEDDeviceInfo deviceInfo = _deviceList[index];
+    String deviceId = deviceInfo.id;
+    String deviceNickName = deviceInfo.nickName;
+    LinkedHashMap<String, DiscoverDeviceInfo> discoverDeviceList =
+        _simpleCtrl.deviceListNotifier.deviceList;
+    bool deviceOnline = false;
+    if (discoverDeviceList[deviceId] != null) {
+      DateTime time = DateTime.now();
+      Duration difference = time.difference(discoverDeviceList[deviceId]!.time);
+      int seconds = difference.inSeconds;
+      // Online
+      if (seconds < _deviceOnlineTimeout) {
+        deviceOnline = true;
+      }
+    }
+
+    return InkWell(
+      onTap: () {},
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(10, 24, 10, 24),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              const Padding(
+                padding: EdgeInsets.fromLTRB(10, 5, 15, 5),
+                child: Icon(
+                  Icons.important_devices_outlined,
+                  size: 40,
+                  color: mainFillColor,
+                ),
+              ),
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(0, 0, 0, 1),
+                      child: Text(
+                        deviceNickName,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontFamily: subFontFamily,
+                          fontWeight: FontWeight.bold,
+                          color: mainTextColor,
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(0, 1, 0, 0),
+                      child: Text(
+                        deviceOnline ? '[online]' : '[offline]',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontFamily: subFontFamily,
+                          fontWeight: FontWeight.bold,
+                          color: deviceOnline ? Colors.green : Colors.grey,
+                        ),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(0, 1, 0, 0),
+                      child: Text(
+                        'id: $deviceId',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontFamily: subFontFamily,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   @override
@@ -92,11 +205,24 @@ class _VoiceLEDHomePageState extends State<VoiceLEDHomePage> {
           ),
         ],
       ),
+      body: SingleChildScrollView(
+        scrollDirection: Axis.vertical,
+        child: ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: _deviceList.length,
+          padding: const EdgeInsets.fromLTRB(5, 10, 5, 10),
+          itemBuilder: (context, index) {
+            return _generateItem(index);
+          },
+        ),
+      ),
     );
   }
 
   @override
   void dispose() {
+    _refreshTimer.cancel();
     _simpleCtrl.destroyDiscovery();
     super.dispose();
   }
@@ -161,9 +287,8 @@ class VoiceLEDConfigDevicePageState extends ClassBindingWidgetState {
 
     _discoverDeviceInfo = parameter[0] as DiscoverDeviceInfo;
     _deviceInfo.nickName = _discoverDeviceInfo.name;
-    _deviceInfoLoad().then((value) {
-      setState(() {});
-    });
+    _deviceInfo.id = _discoverDeviceInfo.id;
+    _deviceInfoLoad().then((value) => setState(() {}));
   }
 
   @override
