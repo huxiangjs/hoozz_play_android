@@ -5,6 +5,8 @@
 ///
 
 import 'package:flutter/material.dart';
+import 'package:hoozz_play/core/class_id.dart';
+import 'package:hoozz_play/core/simple_ctrl.dart';
 import 'package:hoozz_play/themes/theme.dart';
 import 'package:hoozz_play/adapter/esptouch_adapter.dart';
 
@@ -21,8 +23,8 @@ class _ItemInfo {
   IconData icon;
   String name;
   String ip;
-  String page;
-  _ItemInfo(this.icon, this.name, this.ip, this.page);
+  String id;
+  _ItemInfo(this.icon, this.name, this.ip, this.id);
 }
 
 class _WifiInputDecoration extends InputDecoration {
@@ -58,17 +60,35 @@ class _WifiInputDecoration extends InputDecoration {
         );
 }
 
+class _ConfigDevicePage extends StatefulWidget {
+  final ClassBindingWidgetState _page;
+
+  const _ConfigDevicePage(this._page);
+
+  @override
+  State<StatefulWidget> createState() => _page;
+}
+
 class _EspTouchPageState extends State<EspTouchPage> {
   final List<_ItemInfo> _itemList = [];
+  final SimpleCtrl _simpleCtrl = SimpleCtrl();
 
   Widget _generateItem(int index) {
+    bool configActive = false;
+    String deviceId = _itemList[index].id;
+    DiscoverDeviceInfo? deviceInfo =
+        _simpleCtrl.deviceListNotifier.deviceList[deviceId];
+    if (deviceInfo != null) {
+      // Update name
+      _itemList[index].name =
+          _simpleCtrl.deviceListNotifier.deviceList[deviceId]!.name;
+      if (ClassList.classIdList[deviceInfo.classId] != null) {
+        configActive = true;
+      }
+    }
+
     return InkWell(
-      onTap: () {
-        // Navigator.pushNamed(
-        //   context,
-        //   _itemList[index].page,
-        // );
-      },
+      onTap: () {},
       child: Padding(
         padding: const EdgeInsets.fromLTRB(0, 3, 0, 3),
         child: Card(
@@ -117,13 +137,30 @@ class _EspTouchPageState extends State<EspTouchPage> {
                     ),
                   ],
                 ),
-                OutlinedButton(
-                  onPressed: () {},
-                  child: const Text(
-                    'Go',
-                    style: TextStyle(color: Colors.green),
+                Visibility(
+                  visible: configActive,
+                  child: OutlinedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) {
+                            ClassBindingWidgetState page = ClassList
+                                .classIdList[deviceInfo!.classId]!
+                                .page();
+                            // Set parameter
+                            page.parameter = [deviceInfo];
+                            return _ConfigDevicePage(page);
+                          },
+                        ),
+                      ).then((value) {});
+                    },
+                    child: const Text(
+                      'Go',
+                      style: TextStyle(color: Colors.green),
+                    ),
                   ),
-                )
+                ),
               ],
             ),
           ),
@@ -172,8 +209,8 @@ class _EspTouchPageState extends State<EspTouchPage> {
   void _updateResult(String ip, String mac) {
     if (mounted) {
       setState(() {
-        _itemList
-            .add(_ItemInfo(Icons.devices_other_outlined, 'UNKNOWN', ip, ''));
+        _itemList.add(_ItemInfo(Icons.devices_other_outlined, 'UNKNOWN', ip,
+            SimpleCtrlTool.macToId(mac)));
       });
     }
   }
@@ -233,10 +270,14 @@ class _EspTouchPageState extends State<EspTouchPage> {
   void initState() {
     super.initState();
     _updateWifiName();
+    _simpleCtrl.initDiscover();
+    // Listen update
+    _simpleCtrl.deviceListNotifier.addListener(() => setState(() {}));
   }
 
   @override
   void dispose() {
+    _simpleCtrl.destroyDiscovery();
     super.dispose();
   }
 

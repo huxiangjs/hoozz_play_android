@@ -35,6 +35,12 @@ class DeviceListChangeNotifier extends ChangeNotifier {
   }
 }
 
+class SimpleCtrlTool {
+  static String macToId(String mac) {
+    return '${mac}00';
+  }
+}
+
 class SimpleCtrl {
   final int _discoverUDPPort = 54542;
   final String _discoverSay = 'HOOZZ?';
