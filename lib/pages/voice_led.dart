@@ -7,6 +7,7 @@
 import 'dart:async';
 import 'dart:collection';
 import 'package:flutter/material.dart';
+import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:hoozz_play/core/class_id.dart';
 import 'package:hoozz_play/themes/theme.dart';
 import 'package:hoozz_play/core/simple_ctrl.dart';
@@ -71,6 +72,120 @@ class _VoiceLEDDeviceInfoStorage {
   }
 }
 
+class _ConfigDevicePage extends StatefulWidget {
+  final ClassBindingWidgetState _page;
+
+  const _ConfigDevicePage(this._page);
+
+  @override
+  State<StatefulWidget> createState() => _page;
+}
+
+// LED ctrl page
+class _VoiceLEDDeviceCtrlPage extends StatefulWidget {
+  final DiscoverDeviceInfo _discoverDeviceInfo;
+
+  const _VoiceLEDDeviceCtrlPage(this._discoverDeviceInfo);
+
+  @override
+  State<_VoiceLEDDeviceCtrlPage> createState() =>
+      _VoiceLEDDeviceCtrlPageState();
+}
+
+class _VoiceLEDDeviceCtrlPageState extends State<_VoiceLEDDeviceCtrlPage> {
+  final List<int> _colorIndex = [0, 1, 2];
+  final List<Color> _colorShow = [Colors.redAccent, Colors.green, Colors.blue];
+  final List<double> _colorValue = [0.0, 0.0, 0.0];
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(widget._discoverDeviceInfo.name),
+        actions: [
+          // Config device button
+          IconButton(
+            icon: const Icon(Icons.perm_data_setting_outlined),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) {
+                    ClassBindingWidgetState page = ClassList
+                        .classIdList[widget._discoverDeviceInfo.classId]!
+                        .page();
+                    // Set parameter
+                    page.parameter = [widget._discoverDeviceInfo];
+                    return _ConfigDevicePage(page);
+                  },
+                ),
+              ).then((value) {});
+            },
+          ),
+        ],
+      ),
+      body: ListView(
+        padding: const EdgeInsets.all(20),
+        children: [
+          ColorPicker(
+            paletteType: PaletteType.hueWheel,
+            labelTypes: const [ColorLabelType.hsv, ColorLabelType.rgb],
+            enableAlpha: false,
+            onColorChanged: (Color value) {
+              setState(() {
+                _colorValue[0] = value.red.toDouble();
+                _colorValue[1] = value.green.toDouble();
+                _colorValue[2] = value.blue.toDouble();
+              });
+            },
+            pickerColor: Color.fromARGB(0xFF, _colorValue[0].toInt(),
+                _colorValue[1].toInt(), _colorValue[2].toInt()),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: _colorIndex.map((int index) {
+              return SizedBox(
+                height: 80,
+                child: Slider(
+                  value: _colorValue[index],
+                  onChanged: (data) {
+                    setState(() {
+                      _colorValue[index] = data;
+                    });
+                    // int rgb = _colorValue[0].toInt() << 16 |
+                    //     _colorValue[1].toInt() << 8 |
+                    //     _colorValue[2].toInt();
+                    // developer.log('changed rgb: 0x${rgb.toRadixString(16)}',
+                    //     name: toString());
+                  },
+                  onChangeStart: (data) {},
+                  onChangeEnd: (data) {},
+                  min: 0.0,
+                  max: 0xff,
+                  divisions: 0xff,
+                  label: '${_colorValue[index]}',
+                  activeColor: _colorShow[index],
+                ),
+              );
+            }).toList(),
+          ),
+          const Divider(),
+        ],
+      ),
+    );
+  }
+}
+
 // Home page
 class _VoiceLEDHomePageState extends State<VoiceLEDHomePage> {
   final SimpleCtrl _simpleCtrl = SimpleCtrl();
@@ -125,20 +240,42 @@ class _VoiceLEDHomePageState extends State<VoiceLEDHomePage> {
     }
 
     return InkWell(
-      onTap: () {},
-      child: Card(
-        child: Padding(
+      onTap: () {
+        if (discoverDeviceList[deviceId] != null) {
+          DiscoverDeviceInfo discoverDeviceInfo = discoverDeviceList[deviceId]!;
+          Navigator.push(context,
+              MaterialPageRoute(builder: (BuildContext context) {
+            return _VoiceLEDDeviceCtrlPage(discoverDeviceInfo);
+          }));
+        }
+      },
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(5, 5, 5, 5),
+        child: Container(
           padding: const EdgeInsets.fromLTRB(10, 24, 10, 24),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.all(Radius.circular(16.0)),
+            boxShadow: [
+              BoxShadow(
+                color: Color.fromARGB(0x20, 0x00, 0x00, 0x00),
+                blurRadius: 10,
+                offset: Offset(0, 0),
+              ),
+            ],
+          ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.start,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const Padding(
-                padding: EdgeInsets.fromLTRB(10, 5, 15, 5),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(10, 5, 15, 5),
                 child: Icon(
-                  Icons.important_devices_outlined,
-                  size: 40,
-                  color: mainFillColor,
+                  deviceOnline
+                      ? Icons.sentiment_satisfied_outlined
+                      : Icons.sentiment_dissatisfied_outlined,
+                  size: 60,
+                  color: deviceOnline ? Colors.green : Colors.grey,
                 ),
               ),
               Expanded(
@@ -151,7 +288,7 @@ class _VoiceLEDHomePageState extends State<VoiceLEDHomePage> {
                       child: Text(
                         deviceNickName,
                         style: const TextStyle(
-                          fontSize: 20,
+                          fontSize: 22,
                           fontFamily: subFontFamily,
                           fontWeight: FontWeight.bold,
                           color: mainTextColor,
@@ -201,7 +338,11 @@ class _VoiceLEDHomePageState extends State<VoiceLEDHomePage> {
           // Add device button
           IconButton(
             icon: const Icon(Icons.format_list_bulleted_add),
-            onPressed: () {},
+            onPressed: () {
+              _simpleCtrl.destroyDiscovery();
+              Navigator.pushNamed(context, '/tools')
+                  .then((value) => _simpleCtrl.initDiscover());
+            },
           ),
         ],
       ),
