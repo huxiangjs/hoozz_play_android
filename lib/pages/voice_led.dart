@@ -96,14 +96,19 @@ class _VoiceLEDDeviceCtrlPageState extends State<_VoiceLEDDeviceCtrlPage> {
   final List<int> _colorIndex = [0, 1, 2];
   final List<Color> _colorShow = [Colors.redAccent, Colors.green, Colors.blue];
   final List<double> _colorValue = [0.0, 0.0, 0.0];
+  late SimpleCtrlHandle _simpleCtrlDiscoverHandle;
 
   @override
   void initState() {
     super.initState();
+    _simpleCtrlDiscoverHandle = SimpleCtrlHandle(widget._discoverDeviceInfo);
+    _simpleCtrlDiscoverHandle.stateNotifier.addListener(() {});
+    _simpleCtrlDiscoverHandle.initHandle();
   }
 
   @override
   void dispose() {
+    _simpleCtrlDiscoverHandle.destroyHandle();
     super.dispose();
   }
 
@@ -188,7 +193,7 @@ class _VoiceLEDDeviceCtrlPageState extends State<_VoiceLEDDeviceCtrlPage> {
 
 // Home page
 class _VoiceLEDHomePageState extends State<VoiceLEDHomePage> {
-  final SimpleCtrl _simpleCtrl = SimpleCtrl();
+  final SimpleCtrlDiscover _simpleCtrlDiscover = SimpleCtrlDiscover();
   final List<_VoiceLEDDeviceInfo> _deviceList = [];
   final int _deviceRefreshTime = 1;
   final int _deviceOnlineTimeout = 30;
@@ -208,15 +213,19 @@ class _VoiceLEDHomePageState extends State<VoiceLEDHomePage> {
 
   void _refreshDeviceState(Timer timer) => setState(() {});
 
-  @override
-  void initState() {
-    super.initState();
-    _simpleCtrl.initDiscover();
-    // Listen update
-    // _simpleCtrl.deviceListNotifier.addListener(() => setState(() {}));
+  void _startRefreshTimer() {
     // Regular refresh
     _refreshTimer = Timer.periodic(
         Duration(seconds: _deviceRefreshTime), _refreshDeviceState);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _simpleCtrlDiscover.initDiscover();
+    // Listen update
+    // _simpleCtrlDiscover.deviceListNotifier.addListener(() => setState(() {}));
+    _startRefreshTimer();
 
     // Load device info
     refreshDeviceList().then((value) => setState(() {}));
@@ -227,7 +236,7 @@ class _VoiceLEDHomePageState extends State<VoiceLEDHomePage> {
     String deviceId = deviceInfo.id;
     String deviceNickName = deviceInfo.nickName;
     LinkedHashMap<String, DiscoverDeviceInfo> discoverDeviceList =
-        _simpleCtrl.deviceListNotifier.deviceList;
+        _simpleCtrlDiscover.deviceListNotifier.deviceList;
     bool deviceOnline = false;
     if (discoverDeviceList[deviceId] != null) {
       DateTime time = DateTime.now();
@@ -243,10 +252,15 @@ class _VoiceLEDHomePageState extends State<VoiceLEDHomePage> {
       onTap: () {
         if (discoverDeviceList[deviceId] != null) {
           DiscoverDeviceInfo discoverDeviceInfo = discoverDeviceList[deviceId]!;
+          _refreshTimer.cancel();
+          _simpleCtrlDiscover.destroyDiscovery();
           Navigator.push(context,
               MaterialPageRoute(builder: (BuildContext context) {
             return _VoiceLEDDeviceCtrlPage(discoverDeviceInfo);
-          }));
+          })).then((value) {
+            _simpleCtrlDiscover.initDiscover();
+            _startRefreshTimer();
+          });
         }
       },
       child: Padding(
@@ -339,9 +353,9 @@ class _VoiceLEDHomePageState extends State<VoiceLEDHomePage> {
           IconButton(
             icon: const Icon(Icons.format_list_bulleted_add),
             onPressed: () {
-              _simpleCtrl.destroyDiscovery();
+              _simpleCtrlDiscover.destroyDiscovery();
               Navigator.pushNamed(context, '/tools')
-                  .then((value) => _simpleCtrl.initDiscover());
+                  .then((value) => _simpleCtrlDiscover.initDiscover());
             },
           ),
         ],
@@ -364,7 +378,7 @@ class _VoiceLEDHomePageState extends State<VoiceLEDHomePage> {
   @override
   void dispose() {
     _refreshTimer.cancel();
-    _simpleCtrl.destroyDiscovery();
+    _simpleCtrlDiscover.destroyDiscovery();
     super.dispose();
   }
 }

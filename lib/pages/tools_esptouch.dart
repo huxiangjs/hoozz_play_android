@@ -71,17 +71,17 @@ class _ConfigDevicePage extends StatefulWidget {
 
 class _EspTouchPageState extends State<EspTouchPage> {
   final List<_ItemInfo> _itemList = [];
-  final SimpleCtrl _simpleCtrl = SimpleCtrl();
+  final SimpleCtrlDiscover _simpleCtrlDiscover = SimpleCtrlDiscover();
 
   Widget _generateItem(int index) {
     bool configActive = false;
     String deviceId = _itemList[index].id;
     DiscoverDeviceInfo? deviceInfo =
-        _simpleCtrl.deviceListNotifier.deviceList[deviceId];
+        _simpleCtrlDiscover.deviceListNotifier.deviceList[deviceId];
     if (deviceInfo != null) {
       // Update name
       _itemList[index].name =
-          _simpleCtrl.deviceListNotifier.deviceList[deviceId]!.name;
+          _simpleCtrlDiscover.deviceListNotifier.deviceList[deviceId]!.name;
       if (ClassList.classIdList[deviceInfo.classId] != null) {
         configActive = true;
       }
@@ -270,14 +270,14 @@ class _EspTouchPageState extends State<EspTouchPage> {
   void initState() {
     super.initState();
     _updateWifiName();
-    _simpleCtrl.initDiscover();
+    _simpleCtrlDiscover.initDiscover();
     // Listen update
-    _simpleCtrl.deviceListNotifier.addListener(() => setState(() {}));
+    _simpleCtrlDiscover.deviceListNotifier.addListener(() => setState(() {}));
   }
 
   @override
   void dispose() {
-    _simpleCtrl.destroyDiscovery();
+    _simpleCtrlDiscover.destroyDiscovery();
     super.dispose();
   }
 

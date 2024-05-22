@@ -28,7 +28,7 @@ class _ConfigDevicePage extends StatefulWidget {
 }
 
 class _DiscoverPageState extends State<DiscoverPage> {
-  final SimpleCtrl _simpleCtrl = SimpleCtrl();
+  final SimpleCtrlDiscover _simpleCtrlDiscover = SimpleCtrlDiscover();
 
   List<DiscoverDeviceInfo> _deviceList = [];
 
@@ -137,18 +137,18 @@ class _DiscoverPageState extends State<DiscoverPage> {
   @override
   void initState() {
     super.initState();
-    _simpleCtrl.initDiscover();
+    _simpleCtrlDiscover.initDiscover();
     // Listen update
-    _simpleCtrl.deviceListNotifier.addListener(() {
+    _simpleCtrlDiscover.deviceListNotifier.addListener(() {
       setState(() {
-        _deviceList = _simpleCtrl.getDeviceList();
+        _deviceList = _simpleCtrlDiscover.getDeviceList();
       });
     });
   }
 
   @override
   void dispose() {
-    _simpleCtrl.destroyDiscovery();
+    _simpleCtrlDiscover.destroyDiscovery();
     super.dispose();
   }
 
