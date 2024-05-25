@@ -63,6 +63,7 @@ class _DeviceListHomePageState extends State<DeviceListHomePage> {
   void initState() {
     super.initState();
     _simpleCtrlDiscover.initDiscover();
+
     // First updata
     _refreshOnce();
     // Listen update
@@ -104,6 +105,8 @@ class _DeviceListHomePageState extends State<DeviceListHomePage> {
             return ParameterStatefulWidget(page);
           })).then((value) {
             _simpleCtrlDiscover.initDiscover();
+            // Load device info
+            refreshDeviceList().then((value) => setState(() {}));
             _refreshOnce();
           });
         }
@@ -199,8 +202,12 @@ class _DeviceListHomePageState extends State<DeviceListHomePage> {
             icon: const Icon(Icons.format_list_bulleted_add),
             onPressed: () {
               _simpleCtrlDiscover.destroyDiscovery();
-              Navigator.pushNamed(context, '/tools')
-                  .then((value) => _simpleCtrlDiscover.initDiscover());
+              Navigator.pushNamed(context, '/tools').then((value) {
+                _simpleCtrlDiscover.initDiscover();
+                // Load device info
+                refreshDeviceList().then((value) => setState(() {}));
+                _refreshOnce();
+              });
             },
           ),
         ],
