@@ -9,6 +9,7 @@ import 'dart:collection';
 import 'dart:io';
 import 'dart:convert';
 import 'dart:developer' as developer;
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 
 const String _logName = 'simple_ctrl';
@@ -163,6 +164,75 @@ class SimpleCtrlDiscover {
   }
 }
 
+class SimpleCtrlHandlePack {
+  final int dataType;
+  final int encrypType;
+  final int dataLen;
+  final BytesBuilder dataBuffer = BytesBuilder();
+
+  SimpleCtrlHandlePack(this.dataType, this.encrypType, this.dataLen);
+
+  Uint8List get loadData => dataBuffer.toBytes();
+
+  Uint8List pack() {
+    ByteData byteData = ByteData(6);
+    byteData.setUint8(0, dataType);
+    byteData.setUint8(1, encrypType);
+    byteData.setUint32(2, dataBuffer.length, Endian.little);
+
+    BytesBuilder builder = BytesBuilder();
+    builder.add(byteData.buffer.asUint8List());
+    builder.add(dataBuffer.toBytes());
+
+    return builder.toBytes();
+  }
+
+  bool addData(Uint8List data) {
+    if (data.length + dataBuffer.length > dataLen) {
+      return false;
+    }
+    dataBuffer.add(data);
+    return true;
+  }
+
+  static const int typeLen = 6;
+
+  static SimpleCtrlHandlePack factory(Uint8List data) {
+    ByteData byteData = data.buffer.asByteData();
+    int dataType = byteData.getUint8(0);
+    int encrypType = byteData.getUint8(1);
+    int dataLen = byteData.getUint32(2, Endian.little);
+
+    return SimpleCtrlHandlePack(dataType, encrypType, dataLen);
+  }
+}
+
+class SimpleCtrlDataNotifier extends ChangeNotifier {
+  Queue<Uint8List> dataQueue = Queue<Uint8List>();
+  Completer? _completer;
+  final int queueLength;
+
+  SimpleCtrlDataNotifier(this.queueLength);
+
+  void add(Uint8List data) {
+    if (dataQueue.length == queueLength) {
+      developer.log('Data is full', name: _logName);
+      return;
+    }
+    dataQueue.add(data);
+    notifyListeners();
+    if (_completer != null) _completer!.complete();
+  }
+
+  Future<void> wait() async {
+    if (dataQueue.isEmpty) {
+      _completer = Completer();
+      await _completer!.future;
+      _completer = null;
+    }
+  }
+}
+
 class SimpleCtrlHandle {
   static const int stateInit = 0; // Init
   static const int stateConnecting = 1; // Connecting
@@ -170,17 +240,130 @@ class SimpleCtrlHandle {
   static const int stateDisconnected = 3; // Disconnected
   static const int stateFailed = 4; // Failed
 
+  static const int _ctrlDataTypePing = 0x00;
+  static const int _ctrlDataTypeInfo = 0x01;
+  static const int _ctrlDataTypeRequest = 0x02;
+  static const int _ctrlDataTypeNotify = 0x03;
+  static const int _ctrlDataTypeMax = 0x04;
+
+  static const String _ctrlDataHeaderString = 'HOOZZ';
+  static final Uint8List _ctrlDataHeader =
+      Uint8List.fromList(_ctrlDataHeaderString.codeUnits);
+
+  final List<SimpleCtrlDataNotifier> _dataNotifier =
+      List.filled(_ctrlDataTypeMax, SimpleCtrlDataNotifier(20));
+
   final DiscoverDeviceInfo _discoverDeviceInfo;
 
   final ValueNotifier<int> stateNotifier = ValueNotifier<int>(stateInit);
 
-  late Socket _tcpSocket;
+  Socket? _tcpSocket;
 
   final int _pingInterval = 5;
 
-  late Timer _pingTimer;
+  Timer? _pingTimer;
 
   SimpleCtrlHandle(this._discoverDeviceInfo);
+
+  SimpleCtrlDataNotifier get notifyNotifier =>
+      _dataNotifier[_ctrlDataTypeNotify];
+
+  Uint8List _buildPingPackData() {
+    SimpleCtrlHandlePack simpleCtrlHandlePack =
+        SimpleCtrlHandlePack(_ctrlDataTypePing, 0, 0);
+    return simpleCtrlHandlePack.pack();
+  }
+
+  SimpleCtrlHandlePack? _currentParsePack;
+  final Queue<int> _dataQueue = Queue<int>();
+
+  void _handlerPack(SimpleCtrlHandlePack pack) {
+    developer.log('Pack load: ${pack.loadData}', name: _logName);
+
+    if (pack.dataType >= _ctrlDataTypeMax) {
+      developer.log('Data type incorrect', name: _logName);
+      return;
+    }
+
+    Uint8List dataHeader = pack.loadData.sublist(0, _ctrlDataHeader.length);
+    Uint8List data = pack.loadData.sublist(_ctrlDataHeader.length);
+    // developer.log('$dataHeader + $data', name: _logName);
+
+    String header = String.fromCharCodes(dataHeader);
+    if (header != _ctrlDataHeaderString) {
+      developer.log('Data header incorrect: $header != $_ctrlDataHeaderString',
+          name: _logName);
+      return;
+    }
+
+    _dataNotifier[pack.dataType].add(data);
+  }
+
+  void _parsePack(Uint8List data) {
+    // developer.log('Read: $data', name: _logName);
+    // Push to FIFO
+    for (int item in data) {
+      _dataQueue.add(item);
+    }
+
+    if (_currentParsePack == null) {
+      if (_dataQueue.length >= SimpleCtrlHandlePack.typeLen) {
+        Uint8List typeData = Uint8List(SimpleCtrlHandlePack.typeLen);
+        for (int i = 0; i < SimpleCtrlHandlePack.typeLen; i++) {
+          typeData[i] = _dataQueue.removeFirst();
+        }
+        // developer.log('Type data: $typeData', name: _logName);
+        // Start
+        _currentParsePack = SimpleCtrlHandlePack.factory(typeData);
+        developer.log(
+            'Pack: dataType ${_currentParsePack!.dataType}, encrypType ${_currentParsePack!.encrypType}, dataLen ${_currentParsePack!.dataLen}',
+            name: _logName);
+      }
+    }
+
+    if (_currentParsePack != null &&
+        _dataQueue.length >= _currentParsePack!.dataLen) {
+      if (_currentParsePack!.dataLen > 0) {
+        Uint8List loadData = Uint8List(_currentParsePack!.dataLen);
+        for (int i = 0; i < _currentParsePack!.dataLen; i++) {
+          loadData[i] = _dataQueue.removeFirst();
+        }
+        // developer.log('Add data: $loadData', name: _logName);
+        _currentParsePack!.addData(loadData);
+        // Handler pack
+        _handlerPack(_currentParsePack!);
+        // End
+        _currentParsePack = null;
+      } else {
+        // End
+        _currentParsePack = null;
+      }
+    }
+  }
+
+  Future<void> _write(Uint8List data) async {
+    try {
+      // developer.log('Write: $data', name: _logName);
+      // _tcpSocket.write('Hello!');
+      _tcpSocket!.add(data);
+    } catch (e) {
+      developer.log('Write exception', name: _logName);
+    }
+  }
+
+  Uint8List _buildRequestPackData(Uint8List data) {
+    SimpleCtrlHandlePack simpleCtrlHandlePack = SimpleCtrlHandlePack(
+        _ctrlDataTypeRequest, 0, _ctrlDataHeader.length + data.length);
+    simpleCtrlHandlePack.addData(_ctrlDataHeader);
+    simpleCtrlHandlePack.addData(data);
+    return simpleCtrlHandlePack.pack();
+  }
+
+  Future<bool> request(Uint8List data) async {
+    Uint8List packData = _buildRequestPackData(data);
+    await _write(packData);
+    return true;
+  }
 
   Future<bool> initHandle() async {
     try {
@@ -195,7 +378,17 @@ class SimpleCtrlHandle {
           'Connected: ${_discoverDeviceInfo.ip}:${_discoverDeviceInfo.port}',
           name: _logName);
       // Listen disconnected
-      _tcpSocket.drain().then((_) => destroyHandle());
+      // _tcpSocket.drain().then((_) => destroyHandle());
+      // Listen data and disconnected
+      _tcpSocket!
+          .listen(
+            (Uint8List data) => _parsePack(data),
+            onDone: () {},
+            onError: (error) {},
+            cancelOnError: true,
+          )
+          .asFuture()
+          .then((_) => destroyHandle());
     } catch (e) {
       stateNotifier.value = stateFailed;
       developer.log(
@@ -204,20 +397,13 @@ class SimpleCtrlHandle {
       return false;
     }
 
+    final Uint8List pingData = _buildPingPackData();
     // ping remote
     _pingTimer =
         Timer.periodic(Duration(seconds: _pingInterval), (Timer timer) {
       developer.log('Connect ping', name: _logName);
-      () async {
-        try {
-          _tcpSocket.write('Hello, Server!');
-        } catch (e) {
-          developer.log('Write exception', name: _logName);
-        }
-      }.call();
+      _write(pingData);
     });
-
-    // _tcpSocket.cast<List<int>>().transform(utf8.decoder).listen(print);
 
     return true;
   }
@@ -229,8 +415,10 @@ class SimpleCtrlHandle {
         'Disconnected: ${_discoverDeviceInfo.ip}:${_discoverDeviceInfo.port}',
         name: _logName);
     try {
-      _pingTimer.cancel();
-      _tcpSocket.close();
+      _pingTimer!.cancel();
+      _pingTimer = null;
+      _tcpSocket!.close();
+      _tcpSocket = null;
     } catch (e) {
       developer.log('Close socket exception', name: _logName);
     }

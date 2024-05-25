@@ -6,6 +6,7 @@
 
 import 'dart:async';
 import 'dart:collection';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:hoozz_play/core/class_id.dart';
@@ -97,6 +98,7 @@ class _VoiceLEDDeviceCtrlPageState extends State<_VoiceLEDDeviceCtrlPage> {
   final List<Color> _colorShow = [Colors.redAccent, Colors.green, Colors.blue];
   final List<double> _colorValue = [0.0, 0.0, 0.0];
   late SimpleCtrlHandle _simpleCtrlDiscoverHandle;
+  bool _allowNotifierUpdate = true;
 
   @override
   void initState() {
@@ -104,12 +106,39 @@ class _VoiceLEDDeviceCtrlPageState extends State<_VoiceLEDDeviceCtrlPage> {
     _simpleCtrlDiscoverHandle = SimpleCtrlHandle(widget._discoverDeviceInfo);
     _simpleCtrlDiscoverHandle.stateNotifier.addListener(() {});
     _simpleCtrlDiscoverHandle.initHandle();
+    SimpleCtrlDataNotifier simpleCtrlDataNotifier =
+        _simpleCtrlDiscoverHandle.notifyNotifier;
+    simpleCtrlDataNotifier.addListener(() {
+      Uint8List data = simpleCtrlDataNotifier.dataQueue.removeFirst();
+      developer.log('Update color: $data', name: _logName);
+      if (data.length == 3 && _allowNotifierUpdate) {
+        _colorValue[0] = data[2].toDouble();
+        _colorValue[1] = data[1].toDouble();
+        _colorValue[2] = data[0].toDouble();
+        setState(() {});
+      }
+    });
   }
 
   @override
   void dispose() {
     _simpleCtrlDiscoverHandle.destroyHandle();
     super.dispose();
+  }
+
+  void _remoteUpdateColor() {
+    ByteData byteData = ByteData(3);
+    byteData.setUint8(0, _colorValue[2].toInt());
+    byteData.setUint8(1, _colorValue[1].toInt());
+    byteData.setUint8(2, _colorValue[0].toInt());
+
+    Uint8List data = byteData.buffer.asUint8List();
+    _simpleCtrlDiscoverHandle.request(data);
+
+    int rgb = _colorValue[0].toInt() << 16 |
+        _colorValue[1].toInt() << 8 |
+        _colorValue[2].toInt();
+    developer.log('changed rgb: 0x${rgb.toRadixString(16)}', name: toString());
   }
 
   @override
@@ -167,14 +196,14 @@ class _VoiceLEDDeviceCtrlPageState extends State<_VoiceLEDDeviceCtrlPage> {
                     setState(() {
                       _colorValue[index] = data;
                     });
-                    // int rgb = _colorValue[0].toInt() << 16 |
-                    //     _colorValue[1].toInt() << 8 |
-                    //     _colorValue[2].toInt();
-                    // developer.log('changed rgb: 0x${rgb.toRadixString(16)}',
-                    //     name: toString());
+                    _remoteUpdateColor();
                   },
-                  onChangeStart: (data) {},
-                  onChangeEnd: (data) {},
+                  onChangeStart: (data) {
+                    _allowNotifierUpdate = false;
+                  },
+                  onChangeEnd: (data) {
+                    _allowNotifierUpdate = true;
+                  },
                   min: 0.0,
                   max: 0xff,
                   divisions: 0xff,
