@@ -4,12 +4,16 @@
 /// Author: Hoozz (huxiangjs@foxmail.com)
 ///
 
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:hoozz_play/core/device_binding.dart';
 import 'package:hoozz_play/core/simple_ctrl.dart';
 import 'package:hoozz_play/themes/theme.dart';
 import 'package:hoozz_play/adapter/esptouch_adapter.dart';
 import 'package:hoozz_play/core/parameter_stateful.dart';
+import 'dart:developer' as developer;
+
+const String _logName = 'ESP Touch';
 
 class EspTouchPage extends StatefulWidget {
   const EspTouchPage({super.key});
@@ -181,6 +185,8 @@ class _EspTouchPageState extends State<EspTouchPage> {
   bool _configState = false;
   double _configProgress = 0;
   final double _maxDelay = 60;
+  final int _deviceRefreshTime = 200;
+  Timer? _refreshTimer;
 
   Future<void> _waitDone() async {
     for (double i = 0; mounted && i < _maxDelay; i += 0.05) {
@@ -258,17 +264,31 @@ class _EspTouchPageState extends State<EspTouchPage> {
     );
   }
 
+  void _refreshOnce() {
+    if (_refreshTimer != null) _refreshTimer!.cancel();
+    // Regular refresh
+    _refreshTimer = Timer.periodic(Duration(milliseconds: _deviceRefreshTime),
+        (Timer timer) {
+      timer.cancel();
+      setState(() {});
+      developer.log('Refresh once', name: _logName);
+    });
+  }
+
   @override
   void initState() {
     super.initState();
     _updateWifiName();
     _simpleCtrlDiscover.initDiscover();
+    // First updata
+    _refreshOnce();
     // Listen update
-    _simpleCtrlDiscover.deviceListNotifier.addListener(() => setState(() {}));
+    _simpleCtrlDiscover.deviceListNotifier.addListener(() => _refreshOnce());
   }
 
   @override
   void dispose() {
+    _refreshTimer!.cancel();
     _simpleCtrlDiscover.destroyDiscovery();
     super.dispose();
   }

@@ -33,9 +33,9 @@ class DeviceListHomePage extends StatefulWidget {
 class _DeviceListHomePageState extends State<DeviceListHomePage> {
   final SimpleCtrlDiscover _simpleCtrlDiscover = SimpleCtrlDiscover();
   final List<DeviceInfo> _deviceList = [];
-  final int _deviceRefreshTime = 1;
+  final int _deviceRefreshTime = 200;
   final int _deviceOnlineTimeout = 30;
-  late Timer _refreshTimer;
+  Timer? _refreshTimer;
 
   Future<void> refreshDeviceList() async {
     _deviceList.clear();
@@ -48,21 +48,25 @@ class _DeviceListHomePageState extends State<DeviceListHomePage> {
     }
   }
 
-  void _refreshDeviceState(Timer timer) => setState(() {});
-
-  void _startRefreshTimer() {
+  void _refreshOnce() {
+    if (_refreshTimer != null) _refreshTimer!.cancel();
     // Regular refresh
-    _refreshTimer = Timer.periodic(
-        Duration(seconds: _deviceRefreshTime), _refreshDeviceState);
+    _refreshTimer = Timer.periodic(Duration(milliseconds: _deviceRefreshTime),
+        (Timer timer) {
+      timer.cancel();
+      setState(() {});
+      developer.log('Refresh once', name: _logName);
+    });
   }
 
   @override
   void initState() {
     super.initState();
     _simpleCtrlDiscover.initDiscover();
+    // First updata
+    _refreshOnce();
     // Listen update
-    // _simpleCtrlDiscover.deviceListNotifier.addListener(() => setState(() {}));
-    _startRefreshTimer();
+    _simpleCtrlDiscover.deviceListNotifier.addListener(() => _refreshOnce());
 
     // Load device info
     refreshDeviceList().then((value) => setState(() {}));
@@ -89,7 +93,7 @@ class _DeviceListHomePageState extends State<DeviceListHomePage> {
       onTap: () {
         if (discoverDeviceList[deviceId] != null) {
           DiscoverDeviceInfo discoverDeviceInfo = discoverDeviceList[deviceId]!;
-          _refreshTimer.cancel();
+          _refreshTimer!.cancel();
           _simpleCtrlDiscover.destroyDiscovery();
           Navigator.push(context,
               MaterialPageRoute(builder: (BuildContext context) {
@@ -100,7 +104,7 @@ class _DeviceListHomePageState extends State<DeviceListHomePage> {
             return ParameterStatefulWidget(page);
           })).then((value) {
             _simpleCtrlDiscover.initDiscover();
-            _startRefreshTimer();
+            _refreshOnce();
           });
         }
       },
@@ -218,7 +222,7 @@ class _DeviceListHomePageState extends State<DeviceListHomePage> {
 
   @override
   void dispose() {
-    _refreshTimer.cancel();
+    _refreshTimer!.cancel();
     _simpleCtrlDiscover.destroyDiscovery();
     super.dispose();
   }
