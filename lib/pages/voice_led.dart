@@ -5,109 +5,40 @@
 ///
 
 import 'dart:async';
-import 'dart:collection';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
-import 'package:hoozz_play/core/class_id.dart';
+import 'package:hoozz_play/core/device_binding.dart';
+import 'package:hoozz_play/core/parameter_stateful.dart';
 import 'package:hoozz_play/themes/theme.dart';
 import 'package:hoozz_play/core/simple_ctrl.dart';
+import 'package:hoozz_play/core/device_storage.dart';
 import 'dart:developer' as developer;
-import 'package:shared_preferences/shared_preferences.dart';
 
 const String _logName = 'Voice LED';
 
-class VoiceLEDHomePage extends StatefulWidget {
-  const VoiceLEDHomePage({super.key});
-
-  final String title = 'Voice LED';
-
-  @override
-  State<VoiceLEDHomePage> createState() => _VoiceLEDHomePageState();
-}
-
-class _VoiceLEDDeviceInfo {
-  String nickName = '';
-  String id = '';
-  String accessKey = '';
-}
-
-class _VoiceLEDDeviceInfoStorage {
-  final String _storageName = 'Voice LED';
-  final LinkedHashMap<String, _VoiceLEDDeviceInfo> deviceList =
-      LinkedHashMap<String, _VoiceLEDDeviceInfo>();
-
-  Future<void> save() async {
-    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-
-    int count = 0;
-    for (_VoiceLEDDeviceInfo item in deviceList.values) {
-      sharedPreferences.setStringList('$_storageName: Device$count', [
-        item.nickName,
-        item.id,
-        item.accessKey,
-      ]);
-      count++;
-    }
-
-    sharedPreferences.setInt('$_storageName: Device Count', count);
-    developer.log('$_storageName: Device Count: $count', name: _logName);
-  }
-
-  Future<void> load() async {
-    deviceList.clear();
-    SharedPreferences sharedPreferences = await SharedPreferences.getInstance();
-    int? count = sharedPreferences.getInt('$_storageName: Device Count');
-    count ??= 0;
-    developer.log('$_storageName: Device Count: $count', name: _logName);
-    for (int i = 0; i < count; i++) {
-      List<String>? deviceInfo =
-          sharedPreferences.getStringList('$_storageName: Device$i');
-      deviceInfo ??= [];
-      _VoiceLEDDeviceInfo info = _VoiceLEDDeviceInfo();
-      info.nickName = deviceInfo[0];
-      info.id = deviceInfo[1];
-      info.accessKey = deviceInfo[2];
-      deviceList[info.id] = info;
-    }
-  }
-}
-
-class _ConfigDevicePage extends StatefulWidget {
-  final ClassBindingWidgetState _page;
-
-  const _ConfigDevicePage(this._page);
-
-  @override
-  State<StatefulWidget> createState() => _page;
-}
-
 // LED ctrl page
-class _VoiceLEDDeviceCtrlPage extends StatefulWidget {
-  final DiscoverDeviceInfo _discoverDeviceInfo;
-
-  const _VoiceLEDDeviceCtrlPage(this._discoverDeviceInfo);
-
-  @override
-  State<_VoiceLEDDeviceCtrlPage> createState() =>
-      _VoiceLEDDeviceCtrlPageState();
-}
-
-class _VoiceLEDDeviceCtrlPageState extends State<_VoiceLEDDeviceCtrlPage> {
+class VoiceLEDDeviceCtrlPageState extends ParameterStatefulState {
   final List<int> _colorIndex = [0, 1, 2];
   final List<Color> _colorShow = [Colors.redAccent, Colors.green, Colors.blue];
   final List<double> _colorValue = [0.0, 0.0, 0.0];
   late SimpleCtrlHandle _simpleCtrlDiscoverHandle;
   bool _allowNotifierUpdate = true;
+  late DiscoverDeviceInfo _discoverDeviceInfo;
+  late String _storageName;
 
   @override
   void initState() {
     super.initState();
-    _simpleCtrlDiscoverHandle = SimpleCtrlHandle(widget._discoverDeviceInfo);
+    _discoverDeviceInfo = parameter[0] as DiscoverDeviceInfo;
+    _storageName = parameter[1] as String;
+    _simpleCtrlDiscoverHandle = SimpleCtrlHandle(_discoverDeviceInfo);
     _simpleCtrlDiscoverHandle.stateNotifier.addListener(() {});
     _simpleCtrlDiscoverHandle.initHandle();
+
     SimpleCtrlDataNotifier simpleCtrlDataNotifier =
         _simpleCtrlDiscoverHandle.notifyNotifier;
+
     simpleCtrlDataNotifier.addListener(() {
       Uint8List data = simpleCtrlDataNotifier.dataQueue.removeFirst();
       developer.log('Update color: $data', name: _logName);
@@ -145,7 +76,7 @@ class _VoiceLEDDeviceCtrlPageState extends State<_VoiceLEDDeviceCtrlPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget._discoverDeviceInfo.name),
+        title: Text(_discoverDeviceInfo.name),
         actions: [
           // Config device button
           IconButton(
@@ -155,12 +86,12 @@ class _VoiceLEDDeviceCtrlPageState extends State<_VoiceLEDDeviceCtrlPage> {
                 context,
                 MaterialPageRoute(
                   builder: (context) {
-                    ClassBindingWidgetState page = ClassList
-                        .classIdList[widget._discoverDeviceInfo.classId]!
-                        .page();
+                    ParameterStatefulState page = DeviceBindingList
+                        .binding[_discoverDeviceInfo.classId]!
+                        .configPage();
                     // Set parameter
-                    page.parameter = [widget._discoverDeviceInfo];
-                    return _ConfigDevicePage(page);
+                    page.parameter = [_discoverDeviceInfo, _storageName];
+                    return ParameterStatefulWidget(page);
                   },
                 ),
               ).then((value) {});
@@ -220,198 +151,6 @@ class _VoiceLEDDeviceCtrlPageState extends State<_VoiceLEDDeviceCtrlPage> {
   }
 }
 
-// Home page
-class _VoiceLEDHomePageState extends State<VoiceLEDHomePage> {
-  final SimpleCtrlDiscover _simpleCtrlDiscover = SimpleCtrlDiscover();
-  final List<_VoiceLEDDeviceInfo> _deviceList = [];
-  final int _deviceRefreshTime = 1;
-  final int _deviceOnlineTimeout = 30;
-  late Timer _refreshTimer;
-
-  Future<void> refreshDeviceList() async {
-    _deviceList.clear();
-
-    final _VoiceLEDDeviceInfoStorage deviceInfoStorage =
-        _VoiceLEDDeviceInfoStorage();
-    await deviceInfoStorage.load();
-
-    for (_VoiceLEDDeviceInfo item in deviceInfoStorage.deviceList.values) {
-      _deviceList.add(item);
-    }
-  }
-
-  void _refreshDeviceState(Timer timer) => setState(() {});
-
-  void _startRefreshTimer() {
-    // Regular refresh
-    _refreshTimer = Timer.periodic(
-        Duration(seconds: _deviceRefreshTime), _refreshDeviceState);
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _simpleCtrlDiscover.initDiscover();
-    // Listen update
-    // _simpleCtrlDiscover.deviceListNotifier.addListener(() => setState(() {}));
-    _startRefreshTimer();
-
-    // Load device info
-    refreshDeviceList().then((value) => setState(() {}));
-  }
-
-  Widget _generateItem(int index) {
-    _VoiceLEDDeviceInfo deviceInfo = _deviceList[index];
-    String deviceId = deviceInfo.id;
-    String deviceNickName = deviceInfo.nickName;
-    LinkedHashMap<String, DiscoverDeviceInfo> discoverDeviceList =
-        _simpleCtrlDiscover.deviceListNotifier.deviceList;
-    bool deviceOnline = false;
-    if (discoverDeviceList[deviceId] != null) {
-      DateTime time = DateTime.now();
-      Duration difference = time.difference(discoverDeviceList[deviceId]!.time);
-      int seconds = difference.inSeconds;
-      // Online
-      if (seconds < _deviceOnlineTimeout) {
-        deviceOnline = true;
-      }
-    }
-
-    return InkWell(
-      onTap: () {
-        if (discoverDeviceList[deviceId] != null) {
-          DiscoverDeviceInfo discoverDeviceInfo = discoverDeviceList[deviceId]!;
-          _refreshTimer.cancel();
-          _simpleCtrlDiscover.destroyDiscovery();
-          Navigator.push(context,
-              MaterialPageRoute(builder: (BuildContext context) {
-            return _VoiceLEDDeviceCtrlPage(discoverDeviceInfo);
-          })).then((value) {
-            _simpleCtrlDiscover.initDiscover();
-            _startRefreshTimer();
-          });
-        }
-      },
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(5, 5, 5, 5),
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(10, 24, 10, 24),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.all(Radius.circular(16.0)),
-            boxShadow: [
-              BoxShadow(
-                color: Color.fromARGB(0x20, 0x00, 0x00, 0x00),
-                blurRadius: 10,
-                offset: Offset(0, 0),
-              ),
-            ],
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(10, 5, 15, 5),
-                child: Icon(
-                  deviceOnline
-                      ? Icons.sentiment_satisfied_outlined
-                      : Icons.sentiment_dissatisfied_outlined,
-                  size: 60,
-                  color: deviceOnline ? Colors.green : Colors.grey,
-                ),
-              ),
-              Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(0, 0, 0, 1),
-                      child: Text(
-                        deviceNickName,
-                        style: const TextStyle(
-                          fontSize: 22,
-                          fontFamily: subFontFamily,
-                          fontWeight: FontWeight.bold,
-                          color: mainTextColor,
-                        ),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(0, 1, 0, 0),
-                      child: Text(
-                        deviceOnline ? '[online]' : '[offline]',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontFamily: subFontFamily,
-                          fontWeight: FontWeight.bold,
-                          color: deviceOnline ? Colors.green : Colors.grey,
-                        ),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(0, 1, 0, 0),
-                      child: Text(
-                        'id: $deviceId',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontFamily: subFontFamily,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.grey,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.title),
-        actions: [
-          // Add device button
-          IconButton(
-            icon: const Icon(Icons.format_list_bulleted_add),
-            onPressed: () {
-              _simpleCtrlDiscover.destroyDiscovery();
-              Navigator.pushNamed(context, '/tools')
-                  .then((value) => _simpleCtrlDiscover.initDiscover());
-            },
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        scrollDirection: Axis.vertical,
-        child: ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: _deviceList.length,
-          padding: const EdgeInsets.fromLTRB(5, 10, 5, 10),
-          itemBuilder: (context, index) {
-            return _generateItem(index);
-          },
-        ),
-      ),
-    );
-  }
-
-  @override
-  void dispose() {
-    _refreshTimer.cancel();
-    _simpleCtrlDiscover.destroyDiscovery();
-    super.dispose();
-  }
-}
-
 class _DeviceInofInputDecoration extends InputDecoration {
   static final OutlineInputBorder disabledOutlineInputBorder =
       OutlineInputBorder(
@@ -446,12 +185,13 @@ class _DeviceInofInputDecoration extends InputDecoration {
 }
 
 // Config device page
-class VoiceLEDConfigDevicePageState extends ClassBindingWidgetState {
-  _VoiceLEDDeviceInfo _deviceInfo = _VoiceLEDDeviceInfo();
+class VoiceLEDConfigDevicePageState extends ParameterStatefulState {
+  DeviceInfo _deviceInfo = DeviceInfo();
   late DiscoverDeviceInfo _discoverDeviceInfo;
+  late String _storageName;
 
   Future<void> _deviceInfoLoad() async {
-    _VoiceLEDDeviceInfoStorage storage = _VoiceLEDDeviceInfoStorage();
+    DeviceStorage storage = DeviceStorage(_storageName);
     await storage.load();
     if (storage.deviceList[_deviceInfo.id] != null) {
       _deviceInfo = storage.deviceList[_deviceInfo.id]!;
@@ -459,7 +199,7 @@ class VoiceLEDConfigDevicePageState extends ClassBindingWidgetState {
   }
 
   Future<void> _deviceInfoSave() async {
-    _VoiceLEDDeviceInfoStorage storage = _VoiceLEDDeviceInfoStorage();
+    DeviceStorage storage = DeviceStorage(_storageName);
     await storage.load();
     storage.deviceList[_deviceInfo.id] = _deviceInfo;
     await storage.save();
@@ -470,6 +210,7 @@ class VoiceLEDConfigDevicePageState extends ClassBindingWidgetState {
     super.initState();
 
     _discoverDeviceInfo = parameter[0] as DiscoverDeviceInfo;
+    _storageName = parameter[1] as String;
     _deviceInfo.nickName = _discoverDeviceInfo.name;
     _deviceInfo.id = _discoverDeviceInfo.id;
     _deviceInfoLoad().then((value) => setState(() {}));
@@ -509,10 +250,11 @@ class VoiceLEDConfigDevicePageState extends ClassBindingWidgetState {
                   const Text('CLASS: ', style: TextStyle(fontSize: 18)),
                   Expanded(
                     child: Text(
-                      ClassList.classIdList[_discoverDeviceInfo.classId] == null
+                      DeviceBindingList.binding[_discoverDeviceInfo.classId] ==
+                              null
                           ? 'Unknown'
-                          : ClassList.classIdList[_discoverDeviceInfo.classId]!
-                              .describe,
+                          : DeviceBindingList
+                              .binding[_discoverDeviceInfo.classId]!.describe,
                       style: const TextStyle(
                           fontSize: 18, fontFamily: subFontFamily),
                     ),

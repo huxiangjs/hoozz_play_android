@@ -5,9 +5,10 @@
 ///
 
 import 'package:flutter/material.dart';
-import 'package:hoozz_play/core/class_id.dart';
+import 'package:hoozz_play/core/device_binding.dart';
 import 'package:hoozz_play/themes/theme.dart';
 import 'package:hoozz_play/core/simple_ctrl.dart';
+import 'package:hoozz_play/core/parameter_stateful.dart';
 
 class DiscoverPage extends StatefulWidget {
   const DiscoverPage({super.key});
@@ -16,15 +17,6 @@ class DiscoverPage extends StatefulWidget {
 
   @override
   State<DiscoverPage> createState() => _DiscoverPageState();
-}
-
-class _ConfigDevicePage extends StatefulWidget {
-  final ClassBindingWidgetState _page;
-
-  const _ConfigDevicePage(this._page);
-
-  @override
-  State<StatefulWidget> createState() => _page;
 }
 
 class _DiscoverPageState extends State<DiscoverPage> {
@@ -103,19 +95,23 @@ class _DiscoverPageState extends State<DiscoverPage> {
                 ),
                 Visibility(
                   visible:
-                      ClassList.classIdList[_deviceList[index].classId] != null,
+                      DeviceBindingList.binding[_deviceList[index].classId] !=
+                          null,
                   child: OutlinedButton(
                     onPressed: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
                           builder: (context) {
-                            ClassBindingWidgetState page = ClassList
-                                .classIdList[_deviceList[index].classId]!
-                                .page();
+                            DeviceBindingBody body = DeviceBindingList
+                                .binding[_deviceList[index].classId]!;
+                            ParameterStatefulState page = body.configPage();
                             // Set parameter
-                            page.parameter = [_deviceList[index]];
-                            return _ConfigDevicePage(page);
+                            page.parameter = [
+                              _deviceList[index],
+                              body.describe
+                            ];
+                            return ParameterStatefulWidget(page);
                           },
                         ),
                       ).then((value) {});

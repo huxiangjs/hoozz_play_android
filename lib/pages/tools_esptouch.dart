@@ -5,10 +5,11 @@
 ///
 
 import 'package:flutter/material.dart';
-import 'package:hoozz_play/core/class_id.dart';
+import 'package:hoozz_play/core/device_binding.dart';
 import 'package:hoozz_play/core/simple_ctrl.dart';
 import 'package:hoozz_play/themes/theme.dart';
 import 'package:hoozz_play/adapter/esptouch_adapter.dart';
+import 'package:hoozz_play/core/parameter_stateful.dart';
 
 class EspTouchPage extends StatefulWidget {
   const EspTouchPage({super.key});
@@ -60,15 +61,6 @@ class _WifiInputDecoration extends InputDecoration {
         );
 }
 
-class _ConfigDevicePage extends StatefulWidget {
-  final ClassBindingWidgetState _page;
-
-  const _ConfigDevicePage(this._page);
-
-  @override
-  State<StatefulWidget> createState() => _page;
-}
-
 class _EspTouchPageState extends State<EspTouchPage> {
   final List<_ItemInfo> _itemList = [];
   final SimpleCtrlDiscover _simpleCtrlDiscover = SimpleCtrlDiscover();
@@ -82,7 +74,7 @@ class _EspTouchPageState extends State<EspTouchPage> {
       // Update name
       _itemList[index].name =
           _simpleCtrlDiscover.deviceListNotifier.deviceList[deviceId]!.name;
-      if (ClassList.classIdList[deviceInfo.classId] != null) {
+      if (DeviceBindingList.binding[deviceInfo.classId] != null) {
         configActive = true;
       }
     }
@@ -145,12 +137,12 @@ class _EspTouchPageState extends State<EspTouchPage> {
                         context,
                         MaterialPageRoute(
                           builder: (context) {
-                            ClassBindingWidgetState page = ClassList
-                                .classIdList[deviceInfo!.classId]!
-                                .page();
+                            DeviceBindingBody body =
+                                DeviceBindingList.binding[deviceInfo!.classId]!;
+                            ParameterStatefulState page = body.configPage();
                             // Set parameter
-                            page.parameter = [deviceInfo];
-                            return _ConfigDevicePage(page);
+                            page.parameter = [deviceInfo, body.describe];
+                            return ParameterStatefulWidget(page);
                           },
                         ),
                       ).then((value) {});
