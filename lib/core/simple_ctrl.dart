@@ -73,7 +73,7 @@ class SimpleCtrlDiscover {
     }
     _discoverRunning = true;
 
-    developer.log('Start SimpleCtrl', name: _logName);
+    developer.log('Start SimpleCtrl Discovery', name: _logName);
 
     try {
       _udpSocket = await RawDatagramSocket.bind(
@@ -159,18 +159,18 @@ class SimpleCtrlDiscover {
       developer.log('Close socket exception', name: _logName);
     }
 
-    developer.log('Stop SimpleCtrl', name: _logName);
+    developer.log('Stop SimpleCtrl Discovery', name: _logName);
     _discoverRunning = false;
   }
 }
 
-class SimpleCtrlHandlePack {
+class _SimpleCtrlHandlePack {
   final int dataType;
   final int encrypType;
   final int dataLen;
   final BytesBuilder dataBuffer = BytesBuilder();
 
-  SimpleCtrlHandlePack(this.dataType, this.encrypType, this.dataLen);
+  _SimpleCtrlHandlePack(this.dataType, this.encrypType, this.dataLen);
 
   Uint8List get loadData => dataBuffer.toBytes();
 
@@ -197,48 +197,47 @@ class SimpleCtrlHandlePack {
 
   static const int typeLen = 6;
 
-  static SimpleCtrlHandlePack factory(Uint8List data) {
+  static _SimpleCtrlHandlePack factory(Uint8List data) {
     ByteData byteData = data.buffer.asByteData();
     int dataType = byteData.getUint8(0);
     int encrypType = byteData.getUint8(1);
     int dataLen = byteData.getUint32(2, Endian.little);
 
-    return SimpleCtrlHandlePack(dataType, encrypType, dataLen);
+    return _SimpleCtrlHandlePack(dataType, encrypType, dataLen);
   }
 }
 
 class SimpleCtrlDataNotifier extends ChangeNotifier {
-  Queue<Uint8List> dataQueue = Queue<Uint8List>();
-  Completer? _completer;
-  final int queueLength;
+  final Queue<Uint8List> _dataQueue = Queue<Uint8List>();
+  final Queue<Completer> _completerQueue = Queue<Completer>();
 
-  SimpleCtrlDataNotifier(this.queueLength);
-
-  void add(Uint8List data) {
-    if (dataQueue.length == queueLength) {
-      developer.log('Data is full', name: _logName);
-      return;
-    }
-    dataQueue.add(data);
+  void addData(Uint8List data) {
+    // Add data
+    _dataQueue.add(data);
     notifyListeners();
-    if (_completer != null) _completer!.complete();
+    // Set complete
+    if (_completerQueue.isNotEmpty) _completerQueue.removeFirst().complete();
   }
 
-  Future<void> wait() async {
-    if (dataQueue.isEmpty) {
-      _completer = Completer();
-      await _completer!.future;
-      _completer = null;
-    }
+  Uint8List getData() {
+    return _dataQueue.removeFirst();
+  }
+
+  Future<void> waitData(Function? ready, Function? then) async {
+    Completer completer = Completer();
+    _completerQueue.add(completer);
+    if (ready != null) ready();
+    try {
+      await completer.future.timeout(const Duration(seconds: 5));
+      if (then != null) then(getData());
+    } catch (e) {}
   }
 }
 
 class SimpleCtrlHandle {
   static const int stateInit = 0; // Init
-  static const int stateConnecting = 1; // Connecting
-  static const int stateConnected = 2; // Connected
-  static const int stateDisconnected = 3; // Disconnected
-  static const int stateFailed = 4; // Failed
+  static const int stateConnected = 1; // Connected
+  static const int stateDestroy = 2; // Destroy
 
   static const int _ctrlDataTypePing = 0x00;
   static const int _ctrlDataTypeInfo = 0x01;
@@ -251,7 +250,8 @@ class SimpleCtrlHandle {
       Uint8List.fromList(_ctrlDataHeaderString.codeUnits);
 
   final List<SimpleCtrlDataNotifier> _dataNotifier =
-      List.filled(_ctrlDataTypeMax, SimpleCtrlDataNotifier(20));
+      List<SimpleCtrlDataNotifier>.generate(
+          _ctrlDataTypeMax, (index) => SimpleCtrlDataNotifier());
 
   final DiscoverDeviceInfo _discoverDeviceInfo;
 
@@ -269,16 +269,16 @@ class SimpleCtrlHandle {
       _dataNotifier[_ctrlDataTypeNotify];
 
   Uint8List _buildPingPackData() {
-    SimpleCtrlHandlePack simpleCtrlHandlePack =
-        SimpleCtrlHandlePack(_ctrlDataTypePing, 0, 0);
+    _SimpleCtrlHandlePack simpleCtrlHandlePack =
+        _SimpleCtrlHandlePack(_ctrlDataTypePing, 0, 0);
     return simpleCtrlHandlePack.pack();
   }
 
-  SimpleCtrlHandlePack? _currentParsePack;
+  _SimpleCtrlHandlePack? _currentParsePack;
   final Queue<int> _dataQueue = Queue<int>();
 
-  void _handlerPack(SimpleCtrlHandlePack pack) {
-    developer.log('Pack load: ${pack.loadData}', name: _logName);
+  void _handlerPack(_SimpleCtrlHandlePack pack) {
+    // developer.log('Pack load: ${pack.loadData}', name: _logName);
 
     if (pack.dataType >= _ctrlDataTypeMax) {
       developer.log('Data type incorrect', name: _logName);
@@ -296,7 +296,8 @@ class SimpleCtrlHandle {
       return;
     }
 
-    _dataNotifier[pack.dataType].add(data);
+    // developer.log('Add data to: ${pack.dataType}', name: _logName);
+    _dataNotifier[pack.dataType].addData(data);
   }
 
   void _parsePack(Uint8List data) {
@@ -306,39 +307,44 @@ class SimpleCtrlHandle {
       _dataQueue.add(item);
     }
 
-    if (_currentParsePack == null) {
-      if (_dataQueue.length >= SimpleCtrlHandlePack.typeLen) {
-        Uint8List typeData = Uint8List(SimpleCtrlHandlePack.typeLen);
-        for (int i = 0; i < SimpleCtrlHandlePack.typeLen; i++) {
+    while (true) {
+      if (_currentParsePack == null &&
+          _dataQueue.length >= _SimpleCtrlHandlePack.typeLen) {
+        Uint8List typeData = Uint8List(_SimpleCtrlHandlePack.typeLen);
+        for (int i = 0; i < _SimpleCtrlHandlePack.typeLen; i++) {
           typeData[i] = _dataQueue.removeFirst();
         }
         // developer.log('Type data: $typeData', name: _logName);
         // Start
-        _currentParsePack = SimpleCtrlHandlePack.factory(typeData);
+        _currentParsePack = _SimpleCtrlHandlePack.factory(typeData);
         developer.log(
             'Pack: dataType ${_currentParsePack!.dataType}, encrypType ${_currentParsePack!.encrypType}, dataLen ${_currentParsePack!.dataLen}',
             name: _logName);
       }
-    }
 
-    if (_currentParsePack != null &&
-        _dataQueue.length >= _currentParsePack!.dataLen) {
-      if (_currentParsePack!.dataLen > 0) {
-        Uint8List loadData = Uint8List(_currentParsePack!.dataLen);
-        for (int i = 0; i < _currentParsePack!.dataLen; i++) {
-          loadData[i] = _dataQueue.removeFirst();
+      if (_currentParsePack != null &&
+          _dataQueue.length >= _currentParsePack!.dataLen) {
+        if (_currentParsePack!.dataLen > 0) {
+          Uint8List loadData = Uint8List(_currentParsePack!.dataLen);
+          for (int i = 0; i < _currentParsePack!.dataLen; i++) {
+            loadData[i] = _dataQueue.removeFirst();
+          }
+          // developer.log('Add data: $loadData', name: _logName);
+          _currentParsePack!.addData(loadData);
+          // Handler pack
+          _handlerPack(_currentParsePack!);
+          // End
+          _currentParsePack = null;
+        } else {
+          // End
+          _currentParsePack = null;
         }
-        // developer.log('Add data: $loadData', name: _logName);
-        _currentParsePack!.addData(loadData);
-        // Handler pack
-        _handlerPack(_currentParsePack!);
-        // End
-        _currentParsePack = null;
       } else {
-        // End
-        _currentParsePack = null;
+        // Not enough data
+        break;
       }
     }
+    // developer.log('FIFO length: ${_dataQueue.length}', name: _logName);
   }
 
   Future<void> _write(Uint8List data) async {
@@ -352,22 +358,27 @@ class SimpleCtrlHandle {
   }
 
   Uint8List _buildRequestPackData(Uint8List data) {
-    SimpleCtrlHandlePack simpleCtrlHandlePack = SimpleCtrlHandlePack(
+    _SimpleCtrlHandlePack simpleCtrlHandlePack = _SimpleCtrlHandlePack(
         _ctrlDataTypeRequest, 0, _ctrlDataHeader.length + data.length);
     simpleCtrlHandlePack.addData(_ctrlDataHeader);
     simpleCtrlHandlePack.addData(data);
     return simpleCtrlHandlePack.pack();
   }
 
-  Future<bool> request(Uint8List data) async {
+  Future<Uint8List?> request(Uint8List data, bool existReturn) async {
+    Uint8List? retVal;
     Uint8List packData = _buildRequestPackData(data);
-    await _write(packData);
-    return true;
+    if (existReturn) {
+      await _dataNotifier[_ctrlDataTypeRequest]
+          .waitData(() => _write(packData), (value) => retVal = value);
+    } else {
+      await _write(packData);
+    }
+    return retVal;
   }
 
   Future<bool> initHandle() async {
     try {
-      stateNotifier.value = stateConnecting;
       developer.log(
           'Connecting: ${_discoverDeviceInfo.ip}:${_discoverDeviceInfo.port}',
           name: _logName);
@@ -383,17 +394,16 @@ class SimpleCtrlHandle {
       _tcpSocket!
           .listen(
             (Uint8List data) => _parsePack(data),
-            onDone: () {},
-            onError: (error) {},
+            onDone: () => destroyHandle(),
+            onError: (error) => destroyHandle(),
             cancelOnError: true,
           )
           .asFuture()
-          .then((_) => destroyHandle());
+          .catchError((error) => destroyHandle());
+      _tcpSocket!.done.catchError((error) => destroyHandle());
+      _tcpSocket!.done.onError((error, stackTrace) => destroyHandle());
     } catch (e) {
-      stateNotifier.value = stateFailed;
-      developer.log(
-          'Connection failed: ${_discoverDeviceInfo.ip}:${_discoverDeviceInfo.port}',
-          name: _logName);
+      destroyHandle();
       return false;
     }
 
@@ -409,10 +419,10 @@ class SimpleCtrlHandle {
   }
 
   void destroyHandle() {
-    if (stateNotifier.value == stateDisconnected) return;
-    stateNotifier.value = stateDisconnected;
+    if (stateNotifier.value == stateDestroy) return;
+    stateNotifier.value = stateDestroy;
     developer.log(
-        'Disconnected: ${_discoverDeviceInfo.ip}:${_discoverDeviceInfo.port}',
+        'Destroy: ${_discoverDeviceInfo.ip}:${_discoverDeviceInfo.port}',
         name: _logName);
     try {
       _pingTimer!.cancel();
