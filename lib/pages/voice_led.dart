@@ -128,9 +128,9 @@ class VoiceLEDDeviceCtrlPageState extends ParameterStatefulState {
       });
     }
 
-    int rgb = _colorValue[0].toInt() << 16 |
-        _colorValue[1].toInt() << 8 |
-        _colorValue[2].toInt();
+    // int rgb = _colorValue[0].toInt() << 16 |
+    //     _colorValue[1].toInt() << 8 |
+    //     _colorValue[2].toInt();
     // developer.log('Changed color: 0x${rgb.toRadixString(16)}', name: _logName);
   }
 

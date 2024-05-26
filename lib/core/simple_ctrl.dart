@@ -223,14 +223,20 @@ class SimpleCtrlDataNotifier extends ChangeNotifier {
     return _dataQueue.removeFirst();
   }
 
-  Future<void> waitData(Function? ready, Function? then) async {
+  Future<Uint8List?> waitData(int timeout, Function? ready,
+      [Function? then]) async {
+    Uint8List? retVal;
     Completer completer = Completer();
     _completerQueue.add(completer);
     if (ready != null) ready();
     try {
-      await completer.future.timeout(const Duration(seconds: 5));
-      if (then != null) then(getData());
-    } catch (e) {}
+      await completer.future.timeout(Duration(seconds: timeout));
+      retVal = getData();
+      if (then != null) then(retVal);
+    } catch (e) {
+      retVal = null;
+    }
+    return retVal;
   }
 }
 
@@ -244,6 +250,9 @@ class SimpleCtrlHandle {
   static const int _ctrlDataTypeRequest = 0x02;
   static const int _ctrlDataTypeNotify = 0x03;
   static const int _ctrlDataTypeMax = 0x04;
+
+  final int _ctrlReturnOk = 0x00;
+  final int _ctrlReturnFail = 0x01;
 
   static const String _ctrlDataHeaderString = 'HOOZZ';
   static final Uint8List _ctrlDataHeader =
@@ -270,7 +279,15 @@ class SimpleCtrlHandle {
 
   Uint8List _buildPingPackData() {
     _SimpleCtrlHandlePack simpleCtrlHandlePack =
-        _SimpleCtrlHandlePack(_ctrlDataTypePing, 0, 0);
+        _SimpleCtrlHandlePack(_ctrlDataTypePing, 0, _ctrlDataHeader.length + 1);
+
+    ByteData byteData = ByteData(1);
+    byteData.setUint8(0, _pingInterval);
+    Uint8List data = byteData.buffer.asUint8List();
+
+    simpleCtrlHandlePack.addData(_ctrlDataHeader);
+    simpleCtrlHandlePack.addData(data);
+
     return simpleCtrlHandlePack.pack();
   }
 
@@ -370,7 +387,7 @@ class SimpleCtrlHandle {
     Uint8List packData = _buildRequestPackData(data);
     if (existReturn) {
       await _dataNotifier[_ctrlDataTypeRequest]
-          .waitData(() => _write(packData), (value) => retVal = value);
+          .waitData(5, () => _write(packData), (value) => retVal = value);
     } else {
       await _write(packData);
     }
@@ -411,8 +428,17 @@ class SimpleCtrlHandle {
     // ping remote
     _pingTimer =
         Timer.periodic(Duration(seconds: _pingInterval), (Timer timer) {
-      developer.log('Connect ping', name: _logName);
-      _write(pingData);
+      developer.log('Ping start', name: _logName);
+      _dataNotifier[_ctrlDataTypePing]
+          .waitData(5, () => _write(pingData))
+          .then((Uint8List? value) {
+        if (value != null && value.length == 1 && value[0] == _ctrlReturnOk) {
+          developer.log('Ping done', name: _logName);
+        } else {
+          developer.log('Ping failed, retVal: $value', name: _logName);
+          destroyHandle();
+        }
+      });
     });
 
     return true;
