@@ -8,6 +8,7 @@ import 'dart:async';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+import 'package:hoozz_play/core/delayed_call.dart';
 import 'package:hoozz_play/core/device_binding.dart';
 import 'package:hoozz_play/core/parameter_stateful.dart';
 import 'package:hoozz_play/core/simple_showdialog.dart';
@@ -22,10 +23,19 @@ const String _logName = 'Voice LED';
 // LED ctrl page
 class VoiceLEDDeviceCtrlPageState extends ParameterStatefulState {
   final List<int> _colorIndex = [0, 1, 2];
-  final List<Color> _colorShow = [Colors.redAccent, Colors.green, Colors.blue];
-  final List<double> _colorValue = [0.0, 0.0, 0.0];
+  final List<Color> _localColorShow = [
+    Colors.redAccent,
+    Colors.green,
+    Colors.blue
+  ];
+  final List<double> _localColorValue = [0.0, 0.0, 0.0];
+  final List<Color> _remoteColorShow = [
+    Colors.orangeAccent,
+    Colors.greenAccent,
+    Colors.lightBlueAccent
+  ];
+  final List<double> _remoteColorValue = [0.0, 0.0, 0.0];
   late SimpleCtrlHandle _simpleCtrlHandle;
-  bool _allowNotifierUpdate = true;
   late DiscoverDeviceInfo _discoverDeviceInfo;
   late String _storageName;
 
@@ -36,6 +46,8 @@ class VoiceLEDDeviceCtrlPageState extends ParameterStatefulState {
 
   bool _isFirstRender = true;
   bool _dialogRemoved = false;
+
+  late DelayedCall<Uint8List> _delayedCall;
 
   void _stateNotifier() {
     // Connected
@@ -48,12 +60,20 @@ class VoiceLEDDeviceCtrlPageState extends ParameterStatefulState {
         Uint8List data = simpleCtrlDataNotifier.getData();
         if (data.length == 3) {
           developer.log('Received color data: $data', name: _logName);
-          if (_allowNotifierUpdate) {
-            _colorValue[0] = data[2].toDouble();
-            _colorValue[1] = data[1].toDouble();
-            _colorValue[2] = data[0].toDouble();
-            setState(() {});
-          }
+          setState(() {
+            // If consistent, update synchronously
+            if (_localColorValue[0] == _remoteColorValue[0] &&
+                _localColorValue[1] == _remoteColorValue[1] &&
+                _localColorValue[2] == _remoteColorValue[2]) {
+              _localColorValue[0] = _remoteColorValue[0] = data[2].toDouble();
+              _localColorValue[1] = _remoteColorValue[1] = data[1].toDouble();
+              _localColorValue[2] = _remoteColorValue[2] = data[0].toDouble();
+            } else {
+              _remoteColorValue[0] = data[2].toDouble();
+              _remoteColorValue[1] = data[1].toDouble();
+              _remoteColorValue[2] = data[0].toDouble();
+            }
+          });
         } else {
           developer.log('Color data abnormality: $data', name: _logName);
         }
@@ -70,11 +90,23 @@ class VoiceLEDDeviceCtrlPageState extends ParameterStatefulState {
             value.length == 5 &&
             value[0] == _ledCmdGetColor &&
             value[1] == _ledResultOk) {
-          _colorValue[0] = value[4].toDouble();
-          _colorValue[1] = value[3].toDouble();
-          _colorValue[2] = value[2].toDouble();
-          setState(() {});
+          setState(() {
+            _localColorValue[0] = _remoteColorValue[0] = value[4].toDouble();
+            _localColorValue[1] = _remoteColorValue[1] = value[3].toDouble();
+            _localColorValue[2] = _remoteColorValue[2] = value[2].toDouble();
+          });
           // SimpleSnackBar.show(context, 'Device connected', Colors.green);
+          // Set delayed call
+          _delayedCall = DelayedCall<Uint8List>(100, (Uint8List value) {
+            _simpleCtrlHandle.request(value, true).then((value) {
+              developer.log('Set color return: $value', name: _logName);
+            });
+
+            // int rgb = _colorValue[0].toInt() << 16 |
+            //     _colorValue[1].toInt() << 8 |
+            //     _colorValue[2].toInt();
+            // developer.log('Changed color: 0x${rgb.toRadixString(16)}', name: _logName);
+          });
         } else {
           Navigator.pop(context);
           SimpleSnackBar.show(context, 'Abnormal device data', Colors.red);
@@ -110,28 +142,15 @@ class VoiceLEDDeviceCtrlPageState extends ParameterStatefulState {
     super.dispose();
   }
 
-  bool _allowRequest = true;
-
   void _remoteUpdateColor() {
     ByteData byteData = ByteData(4);
     byteData.setUint8(0, _ledCmdSetColor);
-    byteData.setUint8(1, _colorValue[2].toInt());
-    byteData.setUint8(2, _colorValue[1].toInt());
-    byteData.setUint8(3, _colorValue[0].toInt());
-
-    if (_allowRequest) {
-      _allowRequest = false;
-      Uint8List data = byteData.buffer.asUint8List();
-      _simpleCtrlHandle.request(data, true).then((value) {
-        developer.log('Set color return: $value', name: _logName);
-        _allowRequest = true;
-      });
-    }
-
-    // int rgb = _colorValue[0].toInt() << 16 |
-    //     _colorValue[1].toInt() << 8 |
-    //     _colorValue[2].toInt();
-    // developer.log('Changed color: 0x${rgb.toRadixString(16)}', name: _logName);
+    byteData.setUint8(1, _localColorValue[2].toInt());
+    byteData.setUint8(2, _localColorValue[1].toInt());
+    byteData.setUint8(3, _localColorValue[0].toInt());
+    Uint8List data = byteData.buffer.asUint8List();
+    // Delay call
+    _delayedCall.set(data);
   }
 
   @override
@@ -175,13 +194,14 @@ class VoiceLEDDeviceCtrlPageState extends ParameterStatefulState {
             enableAlpha: false,
             onColorChanged: (Color value) {
               setState(() {
-                _colorValue[0] = value.red.toDouble();
-                _colorValue[1] = value.green.toDouble();
-                _colorValue[2] = value.blue.toDouble();
+                _localColorValue[0] = value.red.toDouble();
+                _localColorValue[1] = value.green.toDouble();
+                _localColorValue[2] = value.blue.toDouble();
               });
+              _remoteUpdateColor();
             },
-            pickerColor: Color.fromARGB(0xFF, _colorValue[0].toInt(),
-                _colorValue[1].toInt(), _colorValue[2].toInt()),
+            pickerColor: Color.fromARGB(0xFF, _localColorValue[0].toInt(),
+                _localColorValue[1].toInt(), _localColorValue[2].toInt()),
           ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -189,24 +209,23 @@ class VoiceLEDDeviceCtrlPageState extends ParameterStatefulState {
               return SizedBox(
                 height: 80,
                 child: Slider(
-                  value: _colorValue[index],
                   onChanged: (data) {
                     setState(() {
-                      _colorValue[index] = data;
+                      _localColorValue[index] = data;
                     });
                     _remoteUpdateColor();
                   },
-                  onChangeStart: (data) {
-                    _allowNotifierUpdate = false;
-                  },
-                  onChangeEnd: (data) {
-                    _allowNotifierUpdate = true;
-                  },
+                  onChangeStart: (data) {},
+                  onChangeEnd: (data) {},
                   min: 0.0,
-                  max: 0xff,
-                  divisions: 0xff,
-                  label: '${_colorValue[index]}',
-                  activeColor: _colorShow[index],
+                  max: 255.0,
+                  divisions: 255,
+                  label: '${_localColorValue[index].toInt()}',
+                  value: _localColorValue[index],
+                  activeColor: _localColorShow[index],
+                  // FIXME: Unable to render in time, reason unknown
+                  secondaryTrackValue: _remoteColorValue[index],
+                  secondaryActiveColor: _remoteColorShow[index],
                 ),
               );
             }).toList(),
