@@ -60,7 +60,7 @@ class VoiceLEDDeviceCtrlPageState extends ParameterStatefulState {
           _simpleCtrlHandle.notifyNotifier;
 
       // Set gradient
-      _gradientListCall = GradientListCall<double>(_remoteColorValue, 20, 5,
+      _gradientListCall = GradientListCall<double>(_remoteColorValue, 40, 16,
           (List<double> expectValue, List<double> currentValue,
               List<double> stepSize) {
         double step;
