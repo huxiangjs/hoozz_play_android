@@ -10,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:hoozz_play/core/delayed_call.dart';
 import 'package:hoozz_play/core/device_binding.dart';
+import 'package:hoozz_play/core/gradient_call.dart';
 import 'package:hoozz_play/core/parameter_stateful.dart';
 import 'package:hoozz_play/core/simple_showdialog.dart';
 import 'package:hoozz_play/themes/theme.dart';
@@ -28,13 +29,13 @@ class VoiceLEDDeviceCtrlPageState extends ParameterStatefulState {
     Colors.green,
     Colors.blue
   ];
-  final List<double> _localColorValue = [0.0, 0.0, 0.0];
+  List<double> _localColorValue = [0.0, 0.0, 0.0];
   final List<Color> _remoteColorShow = [
     Colors.orangeAccent,
     Colors.greenAccent,
     Colors.lightBlueAccent
   ];
-  final List<double> _remoteColorValue = [0.0, 0.0, 0.0];
+  List<double> _remoteColorValue = [0.0, 0.0, 0.0];
   late SimpleCtrlHandle _simpleCtrlHandle;
   late DiscoverDeviceInfo _discoverDeviceInfo;
   late String _storageName;
@@ -49,35 +50,68 @@ class VoiceLEDDeviceCtrlPageState extends ParameterStatefulState {
 
   late DelayedCall<Uint8List> _delayedCall;
 
+  late GradientListCall<double> _gradientListCall;
+
   void _stateNotifier() {
     // Connected
     if (_simpleCtrlHandle.stateNotifier.value ==
         SimpleCtrlHandle.stateConnected) {
       SimpleCtrlDataNotifier simpleCtrlDataNotifier =
           _simpleCtrlHandle.notifyNotifier;
-      // Listen color notify
-      simpleCtrlDataNotifier.addListener(() {
-        Uint8List data = simpleCtrlDataNotifier.getData();
-        if (data.length == 3) {
-          developer.log('Received color data: $data', name: _logName);
+
+      // Set gradient
+      _gradientListCall = GradientListCall<double>(_remoteColorValue, 20, 5,
+          (List<double> expectValue, List<double> currentValue,
+              List<double> stepSize) {
+        double step;
+        int index;
+        List<double> newValue = [...currentValue];
+
+        for (index = 0; index < 3; index++) {
+          if (currentValue[index] > expectValue[index]) {
+            step = currentValue[index] - expectValue[index];
+            step = step > stepSize[0] ? stepSize[0] : step;
+            newValue[index] -= step;
+          } else if (currentValue[index] < expectValue[index]) {
+            step = expectValue[index] - currentValue[index];
+            step = step > stepSize[0] ? stepSize[0] : step;
+            newValue[index] += step;
+          }
+        }
+
+        return newValue;
+      }, (List<double> currentValue) {
+        if (mounted) {
           setState(() {
             // If consistent, update synchronously
             if (_localColorValue[0] == _remoteColorValue[0] &&
                 _localColorValue[1] == _remoteColorValue[1] &&
                 _localColorValue[2] == _remoteColorValue[2]) {
-              _localColorValue[0] = _remoteColorValue[0] = data[2].toDouble();
-              _localColorValue[1] = _remoteColorValue[1] = data[1].toDouble();
-              _localColorValue[2] = _remoteColorValue[2] = data[0].toDouble();
-            } else {
-              _remoteColorValue[0] = data[2].toDouble();
-              _remoteColorValue[1] = data[1].toDouble();
-              _remoteColorValue[2] = data[0].toDouble();
+              _localColorValue = [...currentValue];
             }
+            _remoteColorValue = [...currentValue];
           });
+          // developer.log('Refresh color: $_remoteColorValue', name: _logName);
+        }
+      });
+
+      // Listen color notify
+      simpleCtrlDataNotifier.addListener(() {
+        Uint8List data = simpleCtrlDataNotifier.getData();
+        if (data.length == 3) {
+          developer.log('Received color data: $data', name: _logName);
+          List<double> value = [
+            data[2].toDouble(),
+            data[1].toDouble(),
+            data[0].toDouble()
+          ];
+          // Gradient animation
+          _gradientListCall.set(value);
         } else {
           developer.log('Color data abnormality: $data', name: _logName);
         }
       });
+
       // Read remote color value (Once)
       ByteData byteData = ByteData(1);
       byteData.setUint8(0, _ledCmdGetColor);
@@ -90,11 +124,14 @@ class VoiceLEDDeviceCtrlPageState extends ParameterStatefulState {
             value.length == 5 &&
             value[0] == _ledCmdGetColor &&
             value[1] == _ledResultOk) {
-          setState(() {
-            _localColorValue[0] = _remoteColorValue[0] = value[4].toDouble();
-            _localColorValue[1] = _remoteColorValue[1] = value[3].toDouble();
-            _localColorValue[2] = _remoteColorValue[2] = value[2].toDouble();
-          });
+          List<double> newValue = [
+            value[4].toDouble(),
+            value[3].toDouble(),
+            value[2].toDouble()
+          ];
+          // Gradient animation
+          _gradientListCall.set(newValue);
+
           // SimpleSnackBar.show(context, 'Device connected', Colors.green);
           // Set delayed call
           _delayedCall = DelayedCall<Uint8List>(100, (Uint8List value) {
@@ -112,6 +149,7 @@ class VoiceLEDDeviceCtrlPageState extends ParameterStatefulState {
           SimpleSnackBar.show(context, 'Abnormal device data', Colors.red);
         }
       });
+
       // Disconnected or Failed
     } else if (_simpleCtrlHandle.stateNotifier.value ==
         SimpleCtrlHandle.stateDestroy) {
@@ -194,9 +232,11 @@ class VoiceLEDDeviceCtrlPageState extends ParameterStatefulState {
             enableAlpha: false,
             onColorChanged: (Color value) {
               setState(() {
-                _localColorValue[0] = value.red.toDouble();
-                _localColorValue[1] = value.green.toDouble();
-                _localColorValue[2] = value.blue.toDouble();
+                _localColorValue = [
+                  value.red.toDouble(),
+                  value.green.toDouble(),
+                  value.blue.toDouble()
+                ];
               });
               _remoteUpdateColor();
             },
@@ -211,7 +251,9 @@ class VoiceLEDDeviceCtrlPageState extends ParameterStatefulState {
                 child: Slider(
                   onChanged: (data) {
                     setState(() {
-                      _localColorValue[index] = data;
+                      List<double> value = [..._localColorValue];
+                      value[index] = data;
+                      _localColorValue = value;
                     });
                     _remoteUpdateColor();
                   },
