@@ -12,7 +12,7 @@ const Color mainTextColor = Colors.black;
 const Color subTextColor = Color.fromARGB(0xff, 0x6f, 0x6f, 0x6f);
 const String mainFontFamily = 'YouSheBiaoTiHei';
 const String subFontFamily = 'Droid Sans Fallback';
-const Color mainBackgroundColor = const Color.fromARGB(0xef, 0xff, 0xff, 0xff);
+const Color mainBackgroundColor = Color.fromARGB(0xef, 0xff, 0xff, 0xff);
 
 ThemeData appTheme() {
   return ThemeData(
@@ -31,7 +31,7 @@ ThemeData appTheme() {
         ),
     appBarTheme: const AppBarTheme(
       toolbarHeight: 80,
-      systemOverlayStyle: SystemUiOverlayStyle(statusBarColor: mainFillColor),
+      // systemOverlayStyle: SystemUiOverlayStyle(statusBarColor: mainFillColor),
       // elevation: 0,
       titleTextStyle: TextStyle(
         fontSize: 22,
