@@ -5,6 +5,7 @@
 ///
 
 import 'dart:async';
+import 'dart:math';
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
@@ -60,7 +61,7 @@ class VoiceLEDDeviceCtrlPageState extends ParameterStatefulState {
           _simpleCtrlHandle.notifyNotifier;
 
       // Set gradient
-      _gradientListCall = GradientListCall<double>(_remoteColorValue, 40, 16,
+      _gradientListCall = GradientListCall<double>(_remoteColorValue, 30, 7,
           (List<double> expectValue, List<double> currentValue,
               List<double> stepSize) {
         double step;
@@ -191,13 +192,18 @@ class VoiceLEDDeviceCtrlPageState extends ParameterStatefulState {
     _delayedCall.set(data);
   }
 
+  double _shakeSlider = 0;
+
   @override
   Widget build(BuildContext context) {
+    _shakeSlider = _shakeSlider == 0 ? 1 : 0;
+
     if (_isFirstRender) {
       _isFirstRender = false;
       WidgetsBinding.instance.addPostFrameCallback(
           (_) => SimpleShowDialog.show(context, 'Device connecting...'));
     }
+
     return Scaffold(
       appBar: AppBar(
         title: Text(_discoverDeviceInfo.name),
@@ -263,9 +269,18 @@ class VoiceLEDDeviceCtrlPageState extends ParameterStatefulState {
                   max: 255.0,
                   divisions: 255,
                   label: '${_localColorValue[index].toInt()}',
-                  value: _localColorValue[index],
+                  // value: _localColorValue[index],
+                  /*
+                   * NOTE: The following is a workaround solution written to
+                   * allow secondaryTrackValue to be rendered in time.
+                   */
+                  value: min(
+                      _localColorValue[index] +
+                          _shakeSlider +
+                          Random().nextDouble() +
+                          0.5,
+                      255),
                   activeColor: _localColorShow[index],
-                  // FIXME: Unable to render in time, reason unknown
                   secondaryTrackValue: _remoteColorValue[index],
                   secondaryActiveColor: _remoteColorShow[index],
                 ),
