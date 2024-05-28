@@ -4,9 +4,9 @@
 /// Author: Hoozz (huxiangjs@foxmail.com)
 ///
 
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:hoozz_play/core/device_binding.dart';
+import 'package:hoozz_play/core/period_call.dart';
 import 'package:hoozz_play/themes/theme.dart';
 import 'package:hoozz_play/core/simple_ctrl.dart';
 import 'package:hoozz_play/core/parameter_stateful.dart';
@@ -27,8 +27,8 @@ class _DiscoverPageState extends State<DiscoverPage> {
   final SimpleCtrlDiscover _simpleCtrlDiscover = SimpleCtrlDiscover();
 
   List<DiscoverDeviceInfo> _deviceList = [];
-  final int _deviceRefreshTime = 200;
-  Timer? _refreshTimer;
+  final int _deviceRefreshTime = 1000;
+  late PeriodCall _periodCall;
 
   Widget _generateItem(int index) {
     return InkWell(
@@ -136,32 +136,28 @@ class _DiscoverPageState extends State<DiscoverPage> {
     );
   }
 
-  void _refreshOnce() {
-    if (_refreshTimer != null) _refreshTimer!.cancel();
-    // Regular refresh
-    _refreshTimer = Timer.periodic(Duration(milliseconds: _deviceRefreshTime),
-        (Timer timer) {
-      timer.cancel();
+  @override
+  void initState() {
+    super.initState();
+    _simpleCtrlDiscover.initDiscover();
+
+    _periodCall = PeriodCall(_deviceRefreshTime, () {
       setState(() {
         _deviceList = _simpleCtrlDiscover.getDeviceList();
       });
       developer.log('Refresh once', name: _logName);
     });
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _simpleCtrlDiscover.initDiscover();
     // First updata
-    _refreshOnce();
+    _periodCall.ping();
+
     // Listen update
-    _simpleCtrlDiscover.deviceListNotifier.addListener(() => _refreshOnce());
+    _simpleCtrlDiscover.deviceListNotifier
+        .addListener(() => _periodCall.ping());
   }
 
   @override
   void dispose() {
-    _refreshTimer!.cancel();
+    _periodCall.cancel();
     _simpleCtrlDiscover.destroyDiscovery();
     super.dispose();
   }

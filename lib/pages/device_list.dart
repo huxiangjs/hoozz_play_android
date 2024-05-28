@@ -8,6 +8,7 @@ import 'dart:async';
 import 'dart:collection';
 import 'package:flutter/material.dart';
 import 'package:hoozz_play/core/device_binding.dart';
+import 'package:hoozz_play/core/period_call.dart';
 import 'package:hoozz_play/themes/theme.dart';
 import 'package:hoozz_play/core/simple_ctrl.dart';
 import 'package:hoozz_play/core/device_storage.dart';
@@ -33,9 +34,9 @@ class DeviceListHomePage extends StatefulWidget {
 class _DeviceListHomePageState extends State<DeviceListHomePage> {
   final SimpleCtrlDiscover _simpleCtrlDiscover = SimpleCtrlDiscover();
   final List<DeviceInfo> _deviceList = [];
-  final int _deviceRefreshTime = 200;
+  final int _deviceRefreshTime = 1000;
   final int _deviceOnlineTimeout = 30;
-  Timer? _refreshTimer;
+  late PeriodCall _periodCall;
 
   Future<void> refreshDeviceList() async {
     _deviceList.clear();
@@ -48,26 +49,18 @@ class _DeviceListHomePageState extends State<DeviceListHomePage> {
     }
   }
 
-  void _refreshOnce() {
-    if (_refreshTimer != null) _refreshTimer!.cancel();
-    // Regular refresh
-    _refreshTimer = Timer.periodic(Duration(milliseconds: _deviceRefreshTime),
-        (Timer timer) {
-      timer.cancel();
-      setState(() {});
-      developer.log('Refresh once', name: _logName);
-    });
-  }
-
   @override
   void initState() {
     super.initState();
     _simpleCtrlDiscover.initDiscover();
 
+    _periodCall = PeriodCall(_deviceRefreshTime, () => setState(() {}));
     // First updata
-    _refreshOnce();
+    _periodCall.ping();
+
     // Listen update
-    _simpleCtrlDiscover.deviceListNotifier.addListener(() => _refreshOnce());
+    _simpleCtrlDiscover.deviceListNotifier
+        .addListener(() => _periodCall.ping());
 
     // Load device info
     refreshDeviceList().then((value) => setState(() {}));
@@ -94,8 +87,8 @@ class _DeviceListHomePageState extends State<DeviceListHomePage> {
       onTap: () {
         if (discoverDeviceList[deviceId] != null) {
           DiscoverDeviceInfo discoverDeviceInfo = discoverDeviceList[deviceId]!;
-          _refreshTimer!.cancel();
           _simpleCtrlDiscover.destroyDiscovery();
+          _periodCall.cancel();
           Navigator.push(context,
               MaterialPageRoute(builder: (BuildContext context) {
             developer.log('Ctrl Device: ${widget.title}', name: _logName);
@@ -104,10 +97,10 @@ class _DeviceListHomePageState extends State<DeviceListHomePage> {
             // To device ctrl
             return ParameterStatefulWidget(page);
           })).then((value) {
+            _periodCall.restart();
             _simpleCtrlDiscover.initDiscover();
             // Load device info
             refreshDeviceList().then((value) => setState(() {}));
-            _refreshOnce();
           });
         }
       },
@@ -202,11 +195,12 @@ class _DeviceListHomePageState extends State<DeviceListHomePage> {
             icon: const Icon(Icons.format_list_bulleted_add),
             onPressed: () {
               _simpleCtrlDiscover.destroyDiscovery();
+              _periodCall.cancel();
               Navigator.pushNamed(context, '/tools').then((value) {
+                _periodCall.restart();
                 _simpleCtrlDiscover.initDiscover();
                 // Load device info
                 refreshDeviceList().then((value) => setState(() {}));
-                _refreshOnce();
               });
             },
           ),
@@ -229,7 +223,7 @@ class _DeviceListHomePageState extends State<DeviceListHomePage> {
 
   @override
   void dispose() {
-    _refreshTimer!.cancel();
+    _periodCall.cancel();
     _simpleCtrlDiscover.destroyDiscovery();
     super.dispose();
   }
