@@ -430,7 +430,7 @@ class SimpleCtrlHandle {
         Timer.periodic(Duration(seconds: _pingInterval), (Timer timer) {
       developer.log('Ping start', name: _logName);
       _dataNotifier[_ctrlDataTypePing]
-          .waitData(5, () => _write(pingData))
+          .waitData(10, () => _write(pingData))
           .then((Uint8List? value) {
         if (value != null && value.length == 1 && value[0] == _ctrlReturnOk) {
           developer.log('Ping done', name: _logName);
