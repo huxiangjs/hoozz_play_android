@@ -369,6 +369,7 @@ class SimpleCtrlHandle {
       // developer.log('Write: $data', name: _logName);
       // _tcpSocket.write('Hello!');
       _tcpSocket!.add(data);
+      // developer.log('Write OK', name: _logName);
     } catch (e) {
       developer.log('Write exception', name: _logName);
     }
@@ -401,10 +402,10 @@ class SimpleCtrlHandle {
           name: _logName);
       _tcpSocket = await Socket.connect(
           _discoverDeviceInfo.ip, _discoverDeviceInfo.port);
-      stateNotifier.value = stateConnected;
       developer.log(
           'Connected: ${_discoverDeviceInfo.ip}:${_discoverDeviceInfo.port}',
           name: _logName);
+      stateNotifier.value = stateConnected;
       // Listen disconnected
       // _tcpSocket.drain().then((_) => destroyHandle());
       // Listen data and disconnected
@@ -428,7 +429,7 @@ class SimpleCtrlHandle {
     // ping remote
     _pingTimer =
         Timer.periodic(Duration(seconds: _pingInterval), (Timer timer) {
-      developer.log('Ping start', name: _logName);
+      // developer.log('Ping start', name: _logName);
       _dataNotifier[_ctrlDataTypePing]
           .waitData(10, () => _write(pingData))
           .then((Uint8List? value) {
