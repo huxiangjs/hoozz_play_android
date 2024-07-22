@@ -39,6 +39,7 @@ class VoiceLEDDeviceCtrlPageState extends ParameterStatefulState {
   List<double> _remoteColorValue = [0.0, 0.0, 0.0];
   late SimpleCtrlHandle _simpleCtrlHandle;
   late DiscoverDeviceInfo _discoverDeviceInfo;
+  late DeviceInfo _deviceInfo;
   late String _storageName;
 
   final int _ledCmdSetColor = 0x00;
@@ -167,9 +168,10 @@ class VoiceLEDDeviceCtrlPageState extends ParameterStatefulState {
   void initState() {
     super.initState();
     _discoverDeviceInfo = parameter[0] as DiscoverDeviceInfo;
-    _storageName = parameter[1] as String;
+    _deviceInfo = parameter[1] as DeviceInfo;
+    _storageName = parameter[2] as String;
 
-    _simpleCtrlHandle = SimpleCtrlHandle(_discoverDeviceInfo);
+    _simpleCtrlHandle = SimpleCtrlHandle(_discoverDeviceInfo, _deviceInfo);
     _simpleCtrlHandle.stateNotifier.addListener(_stateNotifier);
     _simpleCtrlHandle.initHandle();
   }

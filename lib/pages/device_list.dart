@@ -93,7 +93,7 @@ class _DeviceListHomePageState extends State<DeviceListHomePage> {
               MaterialPageRoute(builder: (BuildContext context) {
             developer.log('Ctrl Device: ${widget.title}', name: _logName);
             ParameterStatefulState page = widget._deviceBindingBody.ctrlPage();
-            page.parameter = [discoverDeviceInfo, widget.title];
+            page.parameter = [discoverDeviceInfo, deviceInfo, widget.title];
             // To device ctrl
             return ParameterStatefulWidget(page);
           })).then((value) {

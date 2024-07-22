@@ -11,6 +11,8 @@ import 'dart:convert';
 import 'dart:developer' as developer;
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:hoozz_play/core/crypto.dart';
+import 'package:hoozz_play/core/device_storage.dart';
 
 const String _logName = 'simple_ctrl';
 
@@ -166,18 +168,18 @@ class SimpleCtrlDiscover {
 
 class _SimpleCtrlHandlePack {
   final int dataType;
-  final int encrypType;
+  final Crypto crypto;
   final int dataLen;
   final BytesBuilder dataBuffer = BytesBuilder();
 
-  _SimpleCtrlHandlePack(this.dataType, this.encrypType, this.dataLen);
+  _SimpleCtrlHandlePack(this.dataType, this.crypto, this.dataLen);
 
   Uint8List get loadData => dataBuffer.toBytes();
 
   Uint8List pack() {
     ByteData byteData = ByteData(6);
     byteData.setUint8(0, dataType);
-    byteData.setUint8(1, encrypType);
+    byteData.setUint8(1, crypto.cryptoType);
     byteData.setUint32(2, dataBuffer.length, Endian.little);
 
     BytesBuilder builder = BytesBuilder();
@@ -187,23 +189,33 @@ class _SimpleCtrlHandlePack {
     return builder.toBytes();
   }
 
-  bool addData(Uint8List data) {
+  bool addData(Uint8List data, [bool encrypto = true]) {
     if (data.length + dataBuffer.length > dataLen) {
       return false;
     }
-    dataBuffer.add(data);
+    if (encrypto) {
+      dataBuffer.add(crypto.en(data));
+    } else {
+      dataBuffer.add(crypto.de(data));
+    }
     return true;
   }
 
   static const int typeLen = 6;
 
-  static _SimpleCtrlHandlePack factory(Uint8List data) {
+  static _SimpleCtrlHandlePack? factory(Uint8List data, Uint8List? passwd) {
     ByteData byteData = data.buffer.asByteData();
     int dataType = byteData.getUint8(0);
-    int encrypType = byteData.getUint8(1);
+    int cryptoType = byteData.getUint8(1);
     int dataLen = byteData.getUint32(2, Endian.little);
 
-    return _SimpleCtrlHandlePack(dataType, encrypType, dataLen);
+    if (cryptoType != Crypto.typeXOR) {
+      developer.log('Mismatched encryption method: $cryptoType',
+          name: _logName);
+      return null;
+    }
+
+    return _SimpleCtrlHandlePack(dataType, CryptoXOR(passwd), dataLen);
   }
 }
 
@@ -263,6 +275,8 @@ class SimpleCtrlHandle {
           _ctrlDataTypeMax, (index) => SimpleCtrlDataNotifier());
 
   final DiscoverDeviceInfo _discoverDeviceInfo;
+  final DeviceInfo _deviceInfo;
+  Uint8List? _accessKey;
 
   final ValueNotifier<int> stateNotifier = ValueNotifier<int>(stateInit);
 
@@ -272,14 +286,19 @@ class SimpleCtrlHandle {
 
   Timer? _pingTimer;
 
-  SimpleCtrlHandle(this._discoverDeviceInfo);
+  SimpleCtrlHandle(this._discoverDeviceInfo, this._deviceInfo) {
+    if (_deviceInfo.accessKey.isNotEmpty) {
+      List<int> list = _deviceInfo.accessKey.codeUnits;
+      _accessKey = Uint8List.fromList(list);
+    }
+  }
 
   SimpleCtrlDataNotifier get notifyNotifier =>
       _dataNotifier[_ctrlDataTypeNotify];
 
   Uint8List _buildPingPackData() {
-    _SimpleCtrlHandlePack simpleCtrlHandlePack =
-        _SimpleCtrlHandlePack(_ctrlDataTypePing, 0, _ctrlDataHeader.length + 1);
+    _SimpleCtrlHandlePack simpleCtrlHandlePack = _SimpleCtrlHandlePack(
+        _ctrlDataTypePing, CryptoXOR(_accessKey), _ctrlDataHeader.length + 1);
 
     ByteData byteData = ByteData(1);
     byteData.setUint8(0, _pingInterval);
@@ -333,10 +352,12 @@ class SimpleCtrlHandle {
         }
         // developer.log('Type data: $typeData', name: _logName);
         // Start
-        _currentParsePack = _SimpleCtrlHandlePack.factory(typeData);
-        developer.log(
-            'Pack: dataType ${_currentParsePack!.dataType}, encrypType ${_currentParsePack!.encrypType}, dataLen ${_currentParsePack!.dataLen}',
-            name: _logName);
+        _currentParsePack = _SimpleCtrlHandlePack.factory(typeData, _accessKey);
+        if (_currentParsePack != null) {
+          developer.log(
+              'Pack: dataType ${_currentParsePack!.dataType}, dataLen ${_currentParsePack!.dataLen}',
+              name: _logName);
+        }
       }
 
       if (_currentParsePack != null &&
@@ -347,7 +368,7 @@ class SimpleCtrlHandle {
             loadData[i] = _dataQueue.removeFirst();
           }
           // developer.log('Add data: $loadData', name: _logName);
-          _currentParsePack!.addData(loadData);
+          _currentParsePack!.addData(loadData, false);
           // Handler pack
           _handlerPack(_currentParsePack!);
           // End
@@ -377,7 +398,9 @@ class SimpleCtrlHandle {
 
   Uint8List _buildRequestPackData(Uint8List data) {
     _SimpleCtrlHandlePack simpleCtrlHandlePack = _SimpleCtrlHandlePack(
-        _ctrlDataTypeRequest, 0, _ctrlDataHeader.length + data.length);
+        _ctrlDataTypeRequest,
+        CryptoXOR(_accessKey),
+        _ctrlDataHeader.length + data.length);
     simpleCtrlHandlePack.addData(_ctrlDataHeader);
     simpleCtrlHandlePack.addData(data);
     return simpleCtrlHandlePack.pack();
