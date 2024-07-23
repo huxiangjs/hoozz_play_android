@@ -170,35 +170,33 @@ class _SimpleCtrlHandlePack {
   final int dataType;
   final Crypto crypto;
   final int dataLen;
-  final BytesBuilder dataBuffer = BytesBuilder();
 
   _SimpleCtrlHandlePack(this.dataType, this.crypto, this.dataLen);
 
-  Uint8List get loadData => dataBuffer.toBytes();
+  Uint8List get loadData => crypto.done();
 
   Uint8List pack() {
     ByteData byteData = ByteData(6);
     byteData.setUint8(0, dataType);
     byteData.setUint8(1, crypto.cryptoType);
-    byteData.setUint32(2, dataBuffer.length, Endian.little);
+    Uint8List lodeData = loadData;
+    byteData.setUint32(2, lodeData.length, Endian.little);
 
     BytesBuilder builder = BytesBuilder();
     builder.add(byteData.buffer.asUint8List());
-    builder.add(dataBuffer.toBytes());
+    builder.add(lodeData);
 
     return builder.toBytes();
   }
 
   bool addData(Uint8List data, [bool encrypto = true]) {
-    if (data.length + dataBuffer.length > dataLen) {
-      return false;
-    }
+    bool retVal = false;
     if (encrypto) {
-      dataBuffer.add(crypto.en(data));
+      retVal = crypto.en(data);
     } else {
-      dataBuffer.add(crypto.de(data));
+      retVal = crypto.de(data);
     }
-    return true;
+    return retVal;
   }
 
   static const int typeLen = 6;

@@ -14,17 +14,22 @@ abstract class Crypto {
   late int cryptoType;
 
   bool passwdSet(Uint8List passwd);
-  Uint8List en(Uint8List data);
-  Uint8List de(Uint8List data);
+  bool en(Uint8List data);
+  bool de(Uint8List data);
+  Uint8List done();
 }
 
 class CryptoXOR implements Crypto {
   static const int passwdMaxLength = 16;
   Uint8List? _passwd;
   int _count = 0;
+  final BytesBuilder _builder = BytesBuilder();
 
-  Uint8List _xor(Uint8List data) {
-    if (_passwd == null) return data;
+  bool _xor(Uint8List data) {
+    if (_passwd == null) {
+      _builder.add(data);
+      return true;
+    }
 
     Uint8List byteData = Uint8List(data.length);
     for (int i = 0; i < data.length; i++) {
@@ -32,7 +37,9 @@ class CryptoXOR implements Crypto {
       _count++;
     }
 
-    return byteData;
+    _builder.add(byteData);
+
+    return true;
   }
 
   CryptoXOR([Uint8List? passwd]) {
@@ -50,8 +57,11 @@ class CryptoXOR implements Crypto {
   }
 
   @override
-  Uint8List en(Uint8List data) => _xor(data);
+  bool en(Uint8List data) => _xor(data);
 
   @override
-  Uint8List de(Uint8List data) => _xor(data);
+  bool de(Uint8List data) => _xor(data);
+
+  @override
+  Uint8List done() => _builder.toBytes();
 }
