@@ -167,17 +167,17 @@ class SimpleCtrlDiscover {
 }
 
 class _SimpleCtrlHandlePack {
-  final int dataType;
+  final int loadType;
   final Crypto crypto;
-  final int dataLen;
+  final int loadLen;
 
-  _SimpleCtrlHandlePack(this.dataType, this.crypto, this.dataLen);
+  _SimpleCtrlHandlePack(this.loadType, this.crypto, this.loadLen);
 
   Uint8List get loadData => crypto.done();
 
   Uint8List pack() {
     ByteData byteData = ByteData(6);
-    byteData.setUint8(0, dataType);
+    byteData.setUint8(0, loadType);
     byteData.setUint8(1, crypto.cryptoType);
     Uint8List lodeData = loadData;
     byteData.setUint32(2, lodeData.length, Endian.little);
@@ -203,17 +203,17 @@ class _SimpleCtrlHandlePack {
 
   static _SimpleCtrlHandlePack? factory(Uint8List data, Uint8List? passwd) {
     ByteData byteData = data.buffer.asByteData();
-    int dataType = byteData.getUint8(0);
+    int loadType = byteData.getUint8(0);
     int cryptoType = byteData.getUint8(1);
-    int dataLen = byteData.getUint32(2, Endian.little);
+    int loadLen = byteData.getUint32(2, Endian.little);
 
-    if (cryptoType != Crypto.typeXOR) {
+    if (cryptoType != Crypto.typeAES128ECB) {
       developer.log('Mismatched encryption method: $cryptoType',
           name: _logName);
       return null;
     }
 
-    return _SimpleCtrlHandlePack(dataType, CryptoXOR(passwd), dataLen);
+    return _SimpleCtrlHandlePack(loadType, CryptoAES128ECB(passwd), loadLen);
   }
 }
 
@@ -255,22 +255,23 @@ class SimpleCtrlHandle {
   static const int stateConnected = 1; // Connected
   static const int stateDestroy = 2; // Destroy
 
-  static const int _ctrlDataTypePing = 0x00;
-  static const int _ctrlDataTypeInfo = 0x01;
-  static const int _ctrlDataTypeRequest = 0x02;
-  static const int _ctrlDataTypeNotify = 0x03;
-  static const int _ctrlDataTypeMax = 0x04;
+  static const int _ctrlLoadTypePing = 0x00;
+  static const int _ctrlLoadTypeInfo = 0x01;
+  static const int _ctrlLoadTypeRequest = 0x02;
+  static const int _ctrlLoadTypeNotify = 0x03;
+  static const int _ctrlLoadTypeMax = 0x04;
 
   final int _ctrlReturnOk = 0x00;
   final int _ctrlReturnFail = 0x01;
 
-  static const String _ctrlDataHeaderString = 'HOOZZ';
-  static final Uint8List _ctrlDataHeader =
-      Uint8List.fromList(_ctrlDataHeaderString.codeUnits);
+  static const int _ctrlLoadHeaderSize = 16;
+  static const String _ctrlLoadMagicString = 'HOOZZ';
+  static final Uint8List _ctrlLoadMagic =
+      Uint8List.fromList(_ctrlLoadMagicString.codeUnits);
 
   final List<SimpleCtrlDataNotifier> _dataNotifier =
       List<SimpleCtrlDataNotifier>.generate(
-          _ctrlDataTypeMax, (index) => SimpleCtrlDataNotifier());
+          _ctrlLoadTypeMax, (index) => SimpleCtrlDataNotifier());
 
   final DiscoverDeviceInfo _discoverDeviceInfo;
   final DeviceInfo _deviceInfo;
@@ -292,17 +293,30 @@ class SimpleCtrlHandle {
   }
 
   SimpleCtrlDataNotifier get notifyNotifier =>
-      _dataNotifier[_ctrlDataTypeNotify];
+      _dataNotifier[_ctrlLoadTypeNotify];
+
+  Uint8List _buildLoadHeader(int dataLen) {
+    ByteData byteData = ByteData(_ctrlLoadHeaderSize);
+    // Set magic
+    for (int index = 0; index < _ctrlLoadMagic.length; index++) {
+      byteData.setUint8(index, _ctrlLoadMagic[index]);
+    }
+    // Set data length
+    byteData.setUint32(12, dataLen, Endian.little);
+    return byteData.buffer.asUint8List();
+  }
 
   Uint8List _buildPingPackData() {
     _SimpleCtrlHandlePack simpleCtrlHandlePack = _SimpleCtrlHandlePack(
-        _ctrlDataTypePing, CryptoXOR(_accessKey), _ctrlDataHeader.length + 1);
-
+        _ctrlLoadTypePing,
+        CryptoAES128ECB(_accessKey),
+        _ctrlLoadHeaderSize + 1);
+    // Set header
+    simpleCtrlHandlePack.addData(_buildLoadHeader(1));
+    // Set data
     ByteData byteData = ByteData(1);
     byteData.setUint8(0, _pingInterval);
     Uint8List data = byteData.buffer.asUint8List();
-
-    simpleCtrlHandlePack.addData(_ctrlDataHeader);
     simpleCtrlHandlePack.addData(data);
 
     return simpleCtrlHandlePack.pack();
@@ -314,24 +328,31 @@ class SimpleCtrlHandle {
   void _handlerPack(_SimpleCtrlHandlePack pack) {
     // developer.log('Pack load: ${pack.loadData}', name: _logName);
 
-    if (pack.dataType >= _ctrlDataTypeMax) {
-      developer.log('Data type incorrect', name: _logName);
+    if (pack.loadType >= _ctrlLoadTypeMax) {
+      developer.log('Load type incorrect', name: _logName);
       return;
     }
 
-    Uint8List dataHeader = pack.loadData.sublist(0, _ctrlDataHeader.length);
-    Uint8List data = pack.loadData.sublist(_ctrlDataHeader.length);
-    // developer.log('$dataHeader + $data', name: _logName);
+    /* |--Magic(6bytes)--|--Reserved(6bytes)--|--Data size(4bytes)--| */
+    Uint8List load = pack.loadData;
+    Uint8List header = load.sublist(0, _ctrlLoadHeaderSize);
+    Uint8List loadMagic = header.sublist(0, _ctrlLoadMagic.length);
+    ByteData byteData = header.buffer.asByteData();
+    int dataLen = byteData.getUint32(12, Endian.little);
 
-    String header = String.fromCharCodes(dataHeader);
-    if (header != _ctrlDataHeaderString) {
-      developer.log('Data header incorrect: $header != $_ctrlDataHeaderString',
+    Uint8List data =
+        load.sublist(_ctrlLoadHeaderSize, _ctrlLoadHeaderSize + dataLen);
+    // developer.log('$data', name: _logName);
+
+    String magic = String.fromCharCodes(loadMagic);
+    if (magic != _ctrlLoadMagicString) {
+      developer.log('Magic incorrect: $magic != $_ctrlLoadMagicString',
           name: _logName);
       return;
     }
 
-    // developer.log('Add data to: ${pack.dataType}', name: _logName);
-    _dataNotifier[pack.dataType].addData(data);
+    // developer.log('Add data to: ${pack.loadType}', name: _logName);
+    _dataNotifier[pack.loadType].addData(data);
   }
 
   void _parsePack(Uint8List data) {
@@ -353,16 +374,16 @@ class SimpleCtrlHandle {
         _currentParsePack = _SimpleCtrlHandlePack.factory(typeData, _accessKey);
         if (_currentParsePack != null) {
           developer.log(
-              'Pack: dataType ${_currentParsePack!.dataType}, dataLen ${_currentParsePack!.dataLen}',
+              'Pack: loadType ${_currentParsePack!.loadType}, loadLen ${_currentParsePack!.loadLen}',
               name: _logName);
         }
       }
 
       if (_currentParsePack != null &&
-          _dataQueue.length >= _currentParsePack!.dataLen) {
-        if (_currentParsePack!.dataLen > 0) {
-          Uint8List loadData = Uint8List(_currentParsePack!.dataLen);
-          for (int i = 0; i < _currentParsePack!.dataLen; i++) {
+          _dataQueue.length >= _currentParsePack!.loadLen) {
+        if (_currentParsePack!.loadLen > 0) {
+          Uint8List loadData = Uint8List(_currentParsePack!.loadLen);
+          for (int i = 0; i < _currentParsePack!.loadLen; i++) {
             loadData[i] = _dataQueue.removeFirst();
           }
           // developer.log('Add data: $loadData', name: _logName);
@@ -396,10 +417,12 @@ class SimpleCtrlHandle {
 
   Uint8List _buildRequestPackData(Uint8List data) {
     _SimpleCtrlHandlePack simpleCtrlHandlePack = _SimpleCtrlHandlePack(
-        _ctrlDataTypeRequest,
-        CryptoXOR(_accessKey),
-        _ctrlDataHeader.length + data.length);
-    simpleCtrlHandlePack.addData(_ctrlDataHeader);
+        _ctrlLoadTypeRequest,
+        CryptoAES128ECB(_accessKey),
+        _ctrlLoadHeaderSize + data.length);
+    // Set header
+    simpleCtrlHandlePack.addData(_buildLoadHeader(data.length));
+    // Set data
     simpleCtrlHandlePack.addData(data);
     return simpleCtrlHandlePack.pack();
   }
@@ -408,7 +431,7 @@ class SimpleCtrlHandle {
     Uint8List? retVal;
     Uint8List packData = _buildRequestPackData(data);
     if (existReturn) {
-      await _dataNotifier[_ctrlDataTypeRequest]
+      await _dataNotifier[_ctrlLoadTypeRequest]
           .waitData(5, () => _write(packData), (value) => retVal = value);
     } else {
       await _write(packData);
@@ -451,7 +474,7 @@ class SimpleCtrlHandle {
     _pingTimer =
         Timer.periodic(Duration(seconds: _pingInterval), (Timer timer) {
       // developer.log('Ping start', name: _logName);
-      _dataNotifier[_ctrlDataTypePing]
+      _dataNotifier[_ctrlLoadTypePing]
           .waitData(10, () => _write(pingData))
           .then((Uint8List? value) {
         if (value != null && value.length == 1 && value[0] == _ctrlReturnOk) {

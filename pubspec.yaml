@@ -56,6 +56,8 @@ dependencies:
 
   flutter_colorpicker: ^1.0.3
 
+  encrypt: ^5.0.1
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
