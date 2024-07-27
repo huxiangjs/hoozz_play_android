@@ -221,6 +221,7 @@ class VoiceLEDDeviceCtrlPageState extends ParameterStatefulState {
                     page.parameter = [
                       _discoverDeviceInfo,
                       _storageName,
+                      true,
                       _simpleCtrlHandle
                     ];
                     return ParameterStatefulWidget(page);
@@ -335,6 +336,7 @@ class VoiceLEDConfigDevicePageState extends ParameterStatefulState {
   DeviceInfo _deviceInfo = DeviceInfo();
   late DiscoverDeviceInfo _discoverDeviceInfo;
   late String _storageName;
+  late bool _allowSetPasswd;
   SimpleCtrlHandle? _simpleCtrlHandle;
 
   Future<void> _deviceInfoLoad() async {
@@ -358,8 +360,9 @@ class VoiceLEDConfigDevicePageState extends ParameterStatefulState {
 
     _discoverDeviceInfo = parameter[0] as DiscoverDeviceInfo;
     _storageName = parameter[1] as String;
-    if (parameter.length > 2) {
-      _simpleCtrlHandle = parameter[2] as SimpleCtrlHandle;
+    _allowSetPasswd = parameter[2] as bool;
+    if (parameter.length > 3) {
+      _simpleCtrlHandle = parameter[3] as SimpleCtrlHandle;
     }
     _deviceInfo.nickName = _discoverDeviceInfo.name;
     _deviceInfo.id = _discoverDeviceInfo.id;
@@ -457,39 +460,44 @@ class VoiceLEDConfigDevicePageState extends ParameterStatefulState {
                 ),
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.all(10),
-              child: TextField(
-                inputFormatters: [
-                  // FilteringTextInputFormatter.allow(RegExp("[a-zA-Z.,!?]")),
-                  FilteringTextInputFormatter.allow(RegExp('[ -~]')),
-                ],
-                controller: TextEditingController(text: _deviceInfo.accessKey),
-                onChanged: (value) =>
-                    _deviceInfo.accessKey = value.replaceAll('\r\n', '\n'),
-                style: const TextStyle(fontSize: 20, fontFamily: subFontFamily),
-                maxLength: SimpleCtrlHandle.accessKeyLength,
-                // maxLines: 2,
-                keyboardType: TextInputType.multiline,
-                decoration: _DeviceInofInputDecoration(
-                    'Access key',
-                    'Set access key for your device',
-                    IconButton(
-                        onPressed: () {
-                          final Random random = Random();
-                          final int start = ' '.codeUnits[0];
-                          final int stop = '~'.codeUnits[0];
-                          final String result = String.fromCharCodes(
-                              List.generate(
-                                  SimpleCtrlHandle.accessKeyLength,
-                                  (index) =>
-                                      random.nextInt(stop - start + 1) +
-                                      start));
-                          setState(() {
-                            _deviceInfo.accessKey = result;
-                          });
-                        },
-                        icon: const Icon(Icons.refresh))),
+            Visibility(
+              visible: _allowSetPasswd,
+              child: Padding(
+                padding: const EdgeInsets.all(10),
+                child: TextField(
+                  inputFormatters: [
+                    // FilteringTextInputFormatter.allow(RegExp("[a-zA-Z.,!?]")),
+                    FilteringTextInputFormatter.allow(RegExp('[ -~]')),
+                  ],
+                  controller:
+                      TextEditingController(text: _deviceInfo.accessKey),
+                  onChanged: (value) =>
+                      _deviceInfo.accessKey = value.replaceAll('\r\n', '\n'),
+                  style:
+                      const TextStyle(fontSize: 20, fontFamily: subFontFamily),
+                  maxLength: SimpleCtrlHandle.accessKeyLength,
+                  // maxLines: 2,
+                  keyboardType: TextInputType.multiline,
+                  decoration: _DeviceInofInputDecoration(
+                      'Access key',
+                      'Set access key for your device',
+                      IconButton(
+                          onPressed: () {
+                            final Random random = Random();
+                            final int start = ' '.codeUnits[0];
+                            final int stop = '~'.codeUnits[0];
+                            final String result = String.fromCharCodes(
+                                List.generate(
+                                    SimpleCtrlHandle.accessKeyLength,
+                                    (index) =>
+                                        random.nextInt(stop - start + 1) +
+                                        start));
+                            setState(() {
+                              _deviceInfo.accessKey = result;
+                            });
+                          },
+                          icon: const Icon(Icons.refresh))),
+                ),
               ),
             ),
             Padding(
@@ -524,6 +532,9 @@ class VoiceLEDConfigDevicePageState extends ParameterStatefulState {
                       }
                     });
                   } else {
+                    if (_allowSetPasswd == false) {
+                      _deviceInfo.accessKey = '';
+                    }
                     _deviceInfoSave();
                     Navigator.pop(context);
                     SimpleSnackBar.show(context, 'Device saved', Colors.green);

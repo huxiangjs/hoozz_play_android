@@ -115,7 +115,8 @@ class _DiscoverPageState extends State<DiscoverPage> {
                             // Set parameter
                             page.parameter = [
                               _deviceList[index],
-                              body.describe
+                              body.describe,
+                              true,
                             ];
                             return ParameterStatefulWidget(page);
                           },

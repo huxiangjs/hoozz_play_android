@@ -145,7 +145,11 @@ class _EspTouchPageState extends State<EspTouchPage> {
                                 DeviceBindingList.binding[deviceInfo!.classId]!;
                             ParameterStatefulState page = body.configPage();
                             // Set parameter
-                            page.parameter = [deviceInfo, body.describe];
+                            page.parameter = [
+                              deviceInfo,
+                              body.describe,
+                              false,
+                            ];
                             return ParameterStatefulWidget(page);
                           },
                         ),
