@@ -6,8 +6,8 @@
 
 import 'dart:async';
 import 'dart:math';
-import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:hoozz_play/core/delayed_call.dart';
 import 'package:hoozz_play/core/device_binding.dart';
@@ -48,7 +48,6 @@ class VoiceLEDDeviceCtrlPageState extends ParameterStatefulState {
   final int _ledResultFail = 0x01;
 
   bool _isFirstRender = true;
-  bool _dialogRemoved = false;
 
   late DelayedCall<Uint8List> _delayedCall;
 
@@ -121,7 +120,6 @@ class VoiceLEDDeviceCtrlPageState extends ParameterStatefulState {
       _simpleCtrlHandle.request(data, true).then((Uint8List? value) {
         developer.log('Get color return: $value', name: _logName);
         Navigator.pop(context);
-        _dialogRemoved = true;
         if (value != null &&
             value.length == 5 &&
             value[0] == _ledCmdGetColor &&
@@ -147,7 +145,8 @@ class VoiceLEDDeviceCtrlPageState extends ParameterStatefulState {
             // developer.log('Changed color: 0x${rgb.toRadixString(16)}', name: _logName);
           });
         } else {
-          Navigator.pop(context);
+          Navigator.popUntil(
+              context, (route) => route.settings.name == '/voice_led');
           SimpleSnackBar.show(context, 'Abnormal device data', Colors.red);
         }
       });
@@ -155,11 +154,8 @@ class VoiceLEDDeviceCtrlPageState extends ParameterStatefulState {
       // Disconnected or Failed
     } else if (_simpleCtrlHandle.stateNotifier.value ==
         SimpleCtrlHandle.stateDestroy) {
-      if (_dialogRemoved == false) {
-        _dialogRemoved = true;
-        Navigator.pop(context);
-      }
-      Navigator.pop(context);
+      Navigator.popUntil(
+          context, (route) => route.settings.name == '/voice_led');
       SimpleSnackBar.show(context, 'Device connection failed', Colors.red);
     }
   }
