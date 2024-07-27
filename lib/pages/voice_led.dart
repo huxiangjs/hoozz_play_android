@@ -218,7 +218,11 @@ class VoiceLEDDeviceCtrlPageState extends ParameterStatefulState {
                         .binding[_discoverDeviceInfo.classId]!
                         .configPage();
                     // Set parameter
-                    page.parameter = [_discoverDeviceInfo, _storageName];
+                    page.parameter = [
+                      _discoverDeviceInfo,
+                      _storageName,
+                      _simpleCtrlHandle
+                    ];
                     return ParameterStatefulWidget(page);
                   },
                 ),
@@ -307,10 +311,11 @@ class _DeviceInofInputDecoration extends InputDecoration {
     gapPadding: 6,
   );
 
-  _DeviceInofInputDecoration(labelText, hintText)
+  _DeviceInofInputDecoration(labelText, hintText, [Widget? suffixIcon])
       : super(
           labelText: labelText,
           hintText: hintText,
+          suffixIcon: suffixIcon,
           labelStyle: const TextStyle(fontSize: 20, fontFamily: mainFontFamily),
           hintStyle: const TextStyle(fontSize: 20, fontFamily: subFontFamily),
           // floatingLabelBehavior: FloatingLabelBehavior.always,
@@ -330,6 +335,7 @@ class VoiceLEDConfigDevicePageState extends ParameterStatefulState {
   DeviceInfo _deviceInfo = DeviceInfo();
   late DiscoverDeviceInfo _discoverDeviceInfo;
   late String _storageName;
+  SimpleCtrlHandle? _simpleCtrlHandle;
 
   Future<void> _deviceInfoLoad() async {
     DeviceStorage storage = DeviceStorage(_storageName);
@@ -352,6 +358,9 @@ class VoiceLEDConfigDevicePageState extends ParameterStatefulState {
 
     _discoverDeviceInfo = parameter[0] as DiscoverDeviceInfo;
     _storageName = parameter[1] as String;
+    if (parameter.length > 2) {
+      _simpleCtrlHandle = parameter[2] as SimpleCtrlHandle;
+    }
     _deviceInfo.nickName = _discoverDeviceInfo.name;
     _deviceInfo.id = _discoverDeviceInfo.id;
     _deviceInfoLoad().then((value) => setState(() {}));
@@ -451,16 +460,36 @@ class VoiceLEDConfigDevicePageState extends ParameterStatefulState {
             Padding(
               padding: const EdgeInsets.all(10),
               child: TextField(
+                inputFormatters: [
+                  // FilteringTextInputFormatter.allow(RegExp("[a-zA-Z.,!?]")),
+                  FilteringTextInputFormatter.allow(RegExp('[ -~]')),
+                ],
                 controller: TextEditingController(text: _deviceInfo.accessKey),
                 onChanged: (value) =>
                     _deviceInfo.accessKey = value.replaceAll('\r\n', '\n'),
                 style: const TextStyle(fontSize: 20, fontFamily: subFontFamily),
+                maxLength: SimpleCtrlHandle.accessKeyLength,
                 // maxLines: 2,
                 keyboardType: TextInputType.multiline,
                 decoration: _DeviceInofInputDecoration(
-                  'Access key',
-                  'Set access key for your device',
-                ),
+                    'Access key',
+                    'Set access key for your device',
+                    IconButton(
+                        onPressed: () {
+                          final Random random = Random();
+                          final int start = ' '.codeUnits[0];
+                          final int stop = '~'.codeUnits[0];
+                          final String result = String.fromCharCodes(
+                              List.generate(
+                                  SimpleCtrlHandle.accessKeyLength,
+                                  (index) =>
+                                      random.nextInt(stop - start + 1) +
+                                      start));
+                          setState(() {
+                            _deviceInfo.accessKey = result;
+                          });
+                        },
+                        icon: const Icon(Icons.refresh))),
               ),
             ),
             Padding(
@@ -475,13 +504,30 @@ class VoiceLEDConfigDevicePageState extends ParameterStatefulState {
                   developer.log('Access key: ${_deviceInfo.accessKey}',
                       name: _logName);
 
-                  SimpleShowDialog.show(context, "Verifying device...");
-
-                  Future.delayed(const Duration(seconds: 3, milliseconds: 0))
-                      .then((value) {
+                  if (_simpleCtrlHandle != null) {
+                    SimpleShowDialog.show(context, "Verifying device...");
+                    _simpleCtrlHandle!
+                        .setPassword(_deviceInfo.accessKey)
+                        .then((bool value) {
+                      if (value) {
+                        _deviceInfoSave();
+                        Navigator.popUntil(context,
+                            (route) => route.settings.name == '/voice_led');
+                        SimpleSnackBar.show(
+                            context, 'Device information saved', Colors.green);
+                      } else {
+                        Navigator.pop(context);
+                        SimpleSnackBar.show(
+                            context,
+                            'Failed to configure device information',
+                            Colors.red);
+                      }
+                    });
+                  } else {
                     _deviceInfoSave();
                     Navigator.pop(context);
-                  });
+                    SimpleSnackBar.show(context, 'Device saved', Colors.green);
+                  }
                 },
                 child: const Text(
                   "Save",

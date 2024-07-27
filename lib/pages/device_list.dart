@@ -49,6 +49,14 @@ class _DeviceListHomePageState extends State<DeviceListHomePage> {
     }
   }
 
+  Future<void> _delecteDevice(String deviceId) async {
+    DeviceStorage storage = DeviceStorage(widget.title);
+    await storage.load();
+
+    storage.deviceList.remove(deviceId);
+    await storage.save();
+  }
+
   @override
   void initState() {
     super.initState();
@@ -91,7 +99,7 @@ class _DeviceListHomePageState extends State<DeviceListHomePage> {
           _periodCall.cancel();
           Navigator.push(context,
               MaterialPageRoute(builder: (BuildContext context) {
-            developer.log('Ctrl Device: ${widget.title}', name: _logName);
+            developer.log('Click Device: ${widget.title}', name: _logName);
             ParameterStatefulState page = widget._deviceBindingBody.ctrlPage();
             page.parameter = [discoverDeviceInfo, deviceInfo, widget.title];
             // To device ctrl
@@ -103,6 +111,39 @@ class _DeviceListHomePageState extends State<DeviceListHomePage> {
             refreshDeviceList().then((value) => setState(() {}));
           });
         }
+      },
+      onLongPress: () {
+        developer.log('Long Press Device: ${widget.title}', name: _logName);
+        showDialog<bool>(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              title: const Text('Warning'),
+              content: const Text(
+                  'Are you sure you want to delete this device?',
+                  style: TextStyle(color: Colors.red)),
+              actions: <Widget>[
+                // Delete device button
+                TextButton(
+                  child: const Text('Yes'),
+                  onPressed: () {
+                    _delecteDevice(_deviceList[index].id).then((value) {
+                      setState(() => _deviceList.removeAt(index));
+                      Navigator.of(context).pop();
+                    });
+                  },
+                ),
+                TextButton(
+                  child:
+                      const Text('No', style: TextStyle(color: Colors.black)),
+                  onPressed: () {
+                    Navigator.of(context).pop(true);
+                  },
+                ),
+              ],
+            );
+          },
+        );
       },
       child: Padding(
         padding: const EdgeInsets.fromLTRB(5, 5, 5, 5),

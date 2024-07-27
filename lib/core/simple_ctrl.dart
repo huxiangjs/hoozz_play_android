@@ -261,6 +261,11 @@ class SimpleCtrlHandle {
   static const int _ctrlLoadTypeNotify = 0x03;
   static const int _ctrlLoadTypeMax = 0x04;
 
+  static const int _ctrlInfoTypeGetName = 0x00;
+  static const int _ctrlInfoTypeSetName = 0x01;
+  static const int _ctrlInfoTypeGetClassId = 0x02;
+  static const int _ctrlInfoTypeSetPasswd = 0x03;
+
   final int _ctrlReturnOk = 0x00;
   final int _ctrlReturnFail = 0x01;
 
@@ -268,6 +273,8 @@ class SimpleCtrlHandle {
   static const String _ctrlLoadMagicString = 'HOOZZ';
   static final Uint8List _ctrlLoadMagic =
       Uint8List.fromList(_ctrlLoadMagicString.codeUnits);
+
+  static const int accessKeyLength = 16;
 
   final List<SimpleCtrlDataNotifier> _dataNotifier =
       List<SimpleCtrlDataNotifier>.generate(
@@ -425,6 +432,49 @@ class SimpleCtrlHandle {
     // Set data
     simpleCtrlHandlePack.addData(data);
     return simpleCtrlHandlePack.pack();
+  }
+
+  Uint8List _buildTypeInfoPackData(int cmd, Uint8List data) {
+    _SimpleCtrlHandlePack simpleCtrlHandlePack = _SimpleCtrlHandlePack(
+        _ctrlLoadTypeInfo,
+        CryptoAES128ECB(_accessKey),
+        _ctrlLoadHeaderSize + 1 + data.length);
+    // Set header
+    simpleCtrlHandlePack.addData(_buildLoadHeader(1 + data.length));
+    // Set cmd
+    ByteData byteData = ByteData(1);
+    byteData.setUint8(0, cmd);
+    simpleCtrlHandlePack.addData(byteData.buffer.asUint8List());
+    // Set data
+    simpleCtrlHandlePack.addData(data);
+    return simpleCtrlHandlePack.pack();
+  }
+
+  Future<bool> setPassword(String passwd) async {
+    Uint8List data = Uint8List.fromList(passwd.codeUnits);
+    if (data.length > 16) {
+      developer.log(
+          'Key must be less than or equal to 16 bytes. (${data.length})',
+          name: _logName);
+      return false;
+    }
+
+    Uint8List setData = _buildTypeInfoPackData(_ctrlInfoTypeSetPasswd, data);
+    await _dataNotifier[_ctrlLoadTypeInfo]
+        .waitData(5, () => _write(setData))
+        .then((Uint8List? value) {
+      if (value != null &&
+          value.length == 2 &&
+          value[0] == _ctrlInfoTypeSetPasswd &&
+          value[1] == _ctrlReturnOk) {
+        developer.log('Set password done', name: _logName);
+      } else {
+        developer.log('Set password failed, retVal: $value', name: _logName);
+        return false;
+      }
+    });
+
+    return true;
   }
 
   Future<Uint8List?> request(Uint8List data, bool existReturn) async {
