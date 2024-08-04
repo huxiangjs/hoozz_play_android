@@ -35,6 +35,11 @@ class _HoozzPlayHomePageState extends State<HoozzPlayHomePage> {
       'VOICE LED',
       '/voice_led',
     ),
+    _ItemInfo(
+      'images/product_view_button_led.png',
+      'BUTTON LED',
+      '/button_led',
+    ),
   ];
 
   Widget _generateItem(int index) {

@@ -45,6 +45,8 @@ class HoozzPlayApp extends StatelessWidget {
         "/remote_sw": (context) => const RemoteSwitchHomePage(),
         "/voice_led": (context) =>
             DeviceListHomePage(DeviceBindingList.idVoiceLed),
+        "/button_led": (context) =>
+            DeviceListHomePage(DeviceBindingList.idButtonLed),
       },
     );
   }

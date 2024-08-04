@@ -91,6 +91,7 @@ flutter:
     - images/product_view_remote_switch.png
     - images/logo_espressif.png
     - images/product_view_voice_led.png
+    - images/product_view_button_led.png
     - images/search_icon.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
