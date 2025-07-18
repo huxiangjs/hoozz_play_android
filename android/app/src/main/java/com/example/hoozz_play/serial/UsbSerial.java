@@ -102,7 +102,9 @@ public class UsbSerial {
                     synchronized (this) {
                         Log.e(TAG, "BroadcastReceiver in sync");
                         /* UsbDevice device = intent.getParcelableExtra(UsbManager.EXTRA_DEVICE); */
-                        if (intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false)) {
+			boolean granted = intent.getBooleanExtra(UsbManager.EXTRA_PERMISSION_GRANTED, false);
+			boolean has =  m_Manager.hasPermission(m_Device);
+                        if (granted || has) {
                             // createPort(m_DriverIndex, m_PortIndex, m_Result, false);
                             m_CB.onSuccess(m_Device);
                         } else {
@@ -120,14 +122,22 @@ public class UsbSerial {
 
         int flags = 0;
 
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+            flags = PendingIntent.FLAG_IMMUTABLE;
+        } else if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
             flags = PendingIntent.FLAG_MUTABLE;
         }
 
         PendingIntent permissionIntent = PendingIntent.getBroadcast(cw, 0, new Intent(ACTION_USB_PERMISSION), flags);
 
         IntentFilter filter = new IntentFilter(ACTION_USB_PERMISSION);
-        cw.registerReceiver(usbReceiver, filter);
+
+	/* Android 14 and later */
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                cw.registerReceiver(usbReceiver, filter, Context.RECEIVER_EXPORTED);
+        } else {
+                cw.registerReceiver(usbReceiver, filter);
+        }
 
         m_Manager.requestPermission(device, permissionIntent);
     }

@@ -3,14 +3,13 @@
 *.log
 *.pyc
 *.swp
-*.code-workspace
-*.lock
 .DS_Store
 .atom/
+.build/
 .buildlog/
 .history
-.vscode/
 .svn/
+.swiftpm/
 migrate_working_dir/
 
 # IntelliJ related
@@ -30,7 +29,6 @@ migrate_working_dir/
 .dart_tool/
 .flutter-plugins
 .flutter-plugins-dependencies
-.packages
 .pub-cache/
 .pub/
 /build/
@@ -45,10 +43,10 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
-/android/app/.cxx
 
 
 # Flutter
 linux/flutter/
 macos/Flutter/
 windows/flutter/
+android/build/

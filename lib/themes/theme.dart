@@ -19,16 +19,16 @@ ThemeData appTheme() {
     primarySwatch: mainFillColor,
     fontFamily: mainFontFamily,
     /* Background color */
-    scaffoldBackgroundColor: mainBackgroundColor,
+    // scaffoldBackgroundColor: mainBackgroundColor,
     /* Text color */
     textTheme: const TextTheme(
-        // titleLarge: TextStyle(fontSize: 32, color: mainTextColor),
-        // titleMedium: TextStyle(fontSize: 24, color: mainTextColor),
-        // titleSmall: TextStyle(fontSize: 15, color: mainTextColor),
-        // bodyLarge: TextStyle(fontSize: 32, color: mainTextColor),
-        // bodyMedium: TextStyle(fontSize: 24, color: mainTextColor),
-        // bodySmall: TextStyle(fontSize: 15, color: mainTextColor),
-        ),
+      // titleLarge: TextStyle(fontSize: 32, color: mainTextColor),
+      // titleMedium: TextStyle(fontSize: 24, color: mainTextColor),
+      // titleSmall: TextStyle(fontSize: 15, color: mainTextColor),
+      // bodyLarge: TextStyle(fontSize: 32, color: mainTextColor),
+      // bodyMedium: TextStyle(fontSize: 24, color: mainTextColor),
+      // bodySmall: TextStyle(fontSize: 15, color: mainTextColor),
+    ),
     appBarTheme: const AppBarTheme(
       toolbarHeight: 80,
       // systemOverlayStyle: SystemUiOverlayStyle(statusBarColor: mainFillColor),
@@ -45,14 +45,9 @@ ThemeData appTheme() {
     sliderTheme: const SliderThemeData(
       valueIndicatorShape: PaddleSliderValueIndicatorShape(),
       overlayShape: RoundSliderOverlayShape(overlayRadius: 15),
-      valueIndicatorTextStyle: TextStyle(
-        color: Colors.white,
-        fontSize: 15,
-      ),
+      valueIndicatorTextStyle: TextStyle(color: Colors.white, fontSize: 12),
     ),
-    listTileTheme: const ListTileThemeData(
-      textColor: mainTextColor,
-    ),
+    listTileTheme: const ListTileThemeData(textColor: mainTextColor),
     radioTheme: RadioThemeData(
       fillColor: MaterialStateProperty.all(mainFillColor),
       visualDensity: VisualDensity.compact,

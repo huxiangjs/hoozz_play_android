@@ -1,6 +1,8 @@
 apply plugin: 'com.android.library'
 
 android {
+    namespace = "com.espressif.iot.esptouch"
+
     compileSdkVersion 29
 
     defaultConfig {

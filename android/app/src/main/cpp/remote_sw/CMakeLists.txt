@@ -73,3 +73,8 @@ include_directories(
              ./
              ./git_things/include/
 )
+
+target_compile_options( remote_sw PRIVATE
+                        -Wno-pointer-to-int-cast
+                        -Wno-int-conversion
+)

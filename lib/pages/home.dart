@@ -30,11 +30,7 @@ class _HoozzPlayHomePageState extends State<HoozzPlayHomePage> {
       'REMOTE SW',
       '/remote_sw',
     ),
-    _ItemInfo(
-      'images/product_view_voice_led.png',
-      'VOICE LED',
-      '/voice_led',
-    ),
+    _ItemInfo('images/product_view_voice_led.png', 'VOICE LED', '/voice_led'),
     _ItemInfo(
       'images/product_view_button_led.png',
       'BUTTON LED',
@@ -69,14 +65,12 @@ class _HoozzPlayHomePageState extends State<HoozzPlayHomePage> {
         child: Column(
           children: <Widget>[
             ClipRRect(
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(8)),
-              child: Image.asset(
-                _itemList[index].icon,
-                fit: BoxFit.cover,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(8),
               ),
+              child: Image.asset(_itemList[index].icon, fit: BoxFit.cover),
             ),
-            Text(_itemList[index].name),
+            Text(_itemList[index].name, style: TextStyle(fontSize: 12)),
           ],
         ),
       ),

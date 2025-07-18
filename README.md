@@ -16,10 +16,14 @@ git submodule update --init --recursive
 
 This application is created based on Flutter, so you need to choose a version of the Flutter development environment to build. You can refer to the following versions:
 ```shell
-Flutter 3.7.10 • channel stable • https://github.com/flutter/flutter.git
-Framework • revision 4b12645012 (5 months ago) • 2023-04-03 17:46:48 -0700
-Engine • revision ec975089ac
-Tools • Dart 2.19.6 • DevTools 2.20.1
+> flutter --version
+Flutter 3.32.7 • channel stable • https://github.com/flutter/flutter.git
+Framework • revision d7b523b356 (3 days ago) • 2025-07-15 17:03:46 -0700
+Engine • revision 39d6d6e699 (3 days ago) • 2025-07-15 15:39:12 -0700
+Tools • Dart 3.8.1 • DevTools 2.45.1
+
+> dart --version
+Dart SDK version: 3.8.1 (stable) (Wed May 28 00:47:25 2025 -0700) on "windows_x64"
 ```
 
 Use the following command when debugging:
@@ -35,7 +39,7 @@ flutter build apk
 ## Test
 
 Tested version of Android:
-* Android 4.4.4
+* Android 4.4.4 (Versions 4.0.0 and later will no longer support)
 * Android 5.1
 * Android 6.0
 * Android 7.1.2
