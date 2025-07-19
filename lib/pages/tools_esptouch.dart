@@ -35,34 +35,34 @@ class _ItemInfo {
 class _WifiInputDecoration extends InputDecoration {
   static final OutlineInputBorder disabledOutlineInputBorder =
       OutlineInputBorder(
-    borderRadius: BorderRadius.circular(24),
-    borderSide: const BorderSide(color: Colors.grey, width: 1.0),
-    gapPadding: 6,
-  );
+        borderRadius: BorderRadius.circular(24),
+        borderSide: const BorderSide(color: Colors.grey, width: 1.0),
+        gapPadding: 6,
+      );
 
   static final OutlineInputBorder enabledOutlineInputBorder =
       OutlineInputBorder(
-    borderRadius: BorderRadius.circular(24),
-    borderSide: const BorderSide(color: mainFillColor, width: 2.0),
-    gapPadding: 6,
-  );
+        borderRadius: BorderRadius.circular(24),
+        borderSide: const BorderSide(color: mainFillColor, width: 2.0),
+        gapPadding: 6,
+      );
 
   _WifiInputDecoration(labelText, hintText)
-      : super(
-          labelText: labelText,
-          hintText: hintText,
-          labelStyle: const TextStyle(fontSize: 20, fontFamily: mainFontFamily),
-          hintStyle: const TextStyle(fontSize: 16, fontFamily: subFontFamily),
-          // floatingLabelBehavior: FloatingLabelBehavior.always,
-          contentPadding: const EdgeInsets.symmetric(
-            vertical: 15,
-            horizontal: 15,
-          ),
-          border: disabledOutlineInputBorder,
-          enabledBorder: disabledOutlineInputBorder,
-          focusedBorder: enabledOutlineInputBorder,
-          disabledBorder: disabledOutlineInputBorder,
-        );
+    : super(
+        labelText: labelText,
+        hintText: hintText,
+        labelStyle: const TextStyle(fontSize: 20, fontFamily: mainFontFamily),
+        hintStyle: const TextStyle(fontSize: 16, fontFamily: subFontFamily),
+        // floatingLabelBehavior: FloatingLabelBehavior.always,
+        contentPadding: const EdgeInsets.symmetric(
+          vertical: 15,
+          horizontal: 15,
+        ),
+        border: disabledOutlineInputBorder,
+        enabledBorder: disabledOutlineInputBorder,
+        focusedBorder: enabledOutlineInputBorder,
+        disabledBorder: disabledOutlineInputBorder,
+      );
 }
 
 class _EspTouchPageState extends State<EspTouchPage> {
@@ -145,11 +145,7 @@ class _EspTouchPageState extends State<EspTouchPage> {
                                 DeviceBindingList.binding[deviceInfo!.classId]!;
                             ParameterStatefulState page = body.configPage();
                             // Set parameter
-                            page.parameter = [
-                              deviceInfo,
-                              body.describe,
-                              false,
-                            ];
+                            page.parameter = [deviceInfo, body.describe, false];
                             return ParameterStatefulWidget(page);
                           },
                         ),
@@ -171,14 +167,12 @@ class _EspTouchPageState extends State<EspTouchPage> {
 
   void _generateSnackBar(String str, Color bgColor) {
     SnackBar snackBar = SnackBar(
-        content: Text(
-          str,
-          style: const TextStyle(
-            fontSize: 18,
-            fontFamily: mainFontFamily,
-          ),
-        ),
-        backgroundColor: bgColor);
+      content: Text(
+        str,
+        style: const TextStyle(fontSize: 18, fontFamily: mainFontFamily),
+      ),
+      backgroundColor: bgColor,
+    );
     ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 
@@ -211,8 +205,14 @@ class _EspTouchPageState extends State<EspTouchPage> {
   void _updateResult(String ip, String mac) {
     if (mounted) {
       setState(() {
-        _itemList.add(_ItemInfo(Icons.devices_other_outlined, 'UNKNOWN', ip,
-            SimpleCtrlTool.macToId(mac)));
+        _itemList.add(
+          _ItemInfo(
+            Icons.devices_other_outlined,
+            'UNKNOWN',
+            ip,
+            SimpleCtrlTool.macToId(mac),
+          ),
+        );
       });
     }
   }
@@ -224,55 +224,52 @@ class _EspTouchPageState extends State<EspTouchPage> {
       });
     }
     ESPTouchAdapter.startConfig(
-            _wifiName.text, _wifiPassword.text, _updateResult)
-        .then(
-      (value) {
-        // Started
-        if (value) {
-          // Wait
-          _waitDone().then(
-            (value) {
-              if (mounted) {
-                setState(() {
-                  _configState = false;
-                });
-              }
-              ESPTouchAdapter.stopConfig();
-            },
-          );
-        } else {
+      _wifiName.text,
+      _wifiPassword.text,
+      _updateResult,
+    ).then((value) {
+      // Started
+      if (value) {
+        // Wait
+        _waitDone().then((value) {
           if (mounted) {
             setState(() {
               _configState = false;
             });
-            _generateSnackBar('Unable to start configuration', Colors.red);
           }
+          ESPTouchAdapter.stopConfig();
+        });
+      } else {
+        if (mounted) {
+          setState(() {
+            _configState = false;
+          });
+          _generateSnackBar('Unable to start configuration', Colors.red);
         }
-      },
-    );
+      }
+    });
   }
 
   void _updateWifiName() {
-    ESPTouchAdapter.getWifiName().then(
-      (value) {
-        if (value == null) {
-          _generateSnackBar('Can\'t get WiFi information', Colors.red);
-        } else {
-          if (mounted) {
-            setState(() {
-              _wifiName.text = value;
-            });
-          }
+    ESPTouchAdapter.getWifiName().then((value) {
+      if (value == null) {
+        _generateSnackBar('Can\'t get WiFi information', Colors.red);
+      } else {
+        if (mounted) {
+          setState(() {
+            _wifiName.text = value;
+          });
         }
-      },
-    );
+      }
+    });
   }
 
   void _refreshOnce() {
     if (_refreshTimer != null) _refreshTimer!.cancel();
     // Regular refresh
-    _refreshTimer = Timer.periodic(Duration(milliseconds: _deviceRefreshTime),
-        (Timer timer) {
+    _refreshTimer = Timer.periodic(Duration(milliseconds: _deviceRefreshTime), (
+      Timer timer,
+    ) {
       timer.cancel();
       setState(() {});
       developer.log('Refresh once', name: _logName);
@@ -300,9 +297,7 @@ class _EspTouchPageState extends State<EspTouchPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.title),
-      ),
+      appBar: AppBar(title: Text(widget.title)),
       body: SingleChildScrollView(
         scrollDirection: Axis.vertical,
         child: Padding(
@@ -317,8 +312,10 @@ class _EspTouchPageState extends State<EspTouchPage> {
                   controller: _wifiName,
                   autofocus: false,
                   focusNode: _focusNode1,
-                  style:
-                      const TextStyle(fontSize: 20, fontFamily: subFontFamily),
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontFamily: subFontFamily,
+                  ),
                   decoration: _WifiInputDecoration(
                     'SSID',
                     'It\'s your Wi-Fi network name (SSID)',
@@ -331,8 +328,10 @@ class _EspTouchPageState extends State<EspTouchPage> {
                   controller: _wifiPassword,
                   autofocus: false,
                   focusNode: _focusNode2,
-                  style:
-                      const TextStyle(fontSize: 20, fontFamily: subFontFamily),
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontFamily: subFontFamily,
+                  ),
                   decoration: _WifiInputDecoration(
                     'PASSWORD',
                     'It\'s your Wi-Fi network password',
@@ -359,14 +358,16 @@ class _EspTouchPageState extends State<EspTouchPage> {
                       height: 180,
                       child: Visibility(
                         visible: _configState,
-                        child:
-                            CircularProgressIndicator(value: _configProgress),
+                        child: CircularProgressIndicator(
+                          value: _configProgress,
+                        ),
                       ),
                     ),
                     ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         minimumSize: const Size(double.infinity, 170),
                         shape: const CircleBorder(),
+                        backgroundColor: mainFillColor,
                       ),
                       onPressed: _configState
                           ? null
