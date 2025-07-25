@@ -12,6 +12,7 @@ import 'pages/tools.dart';
 import 'pages/settings_about.dart';
 import 'pages/settings_author.dart';
 import 'pages/settings_license.dart';
+import 'pages/settings_vpn.dart';
 import 'pages/mlx90640.dart';
 import "pages/remote_switch.dart";
 import "pages/tools_esptouch.dart";
@@ -41,6 +42,7 @@ class HoozzPlayApp extends StatelessWidget {
         '/about': (context) => const HoozzPlayAboutPage(),
         '/author': (context) => const HoozzPlayAuthorPage(),
         '/license': (context) => const HoozzPlayLicensePage(),
+        '/vpn': (context) => const HoozzPlayVPNPage(),
         '/mlx90640': (context) => const MLX90640HomePage(),
         "/remote_sw": (context) => const RemoteSwitchHomePage(),
         "/voice_led": (context) =>

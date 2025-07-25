@@ -31,6 +31,7 @@ class _HoozzPlaySettingsPageState extends State<HoozzPlaySettingsPage> {
 
   final List<_ItemInfo> _itemList = [
     _ItemInfo(Icons.pan_tool_outlined, 'Tools', '/tools'),
+    _ItemInfo(Icons.share_outlined, 'VPN', '/vpn'),
     _ItemInfo(Icons.info_outline, 'About', '/about'),
     _ItemInfo(Icons.people_outline, 'Author', '/author'),
     _ItemInfo(Icons.contact_page_outlined, 'License', '/license'),
@@ -39,10 +40,7 @@ class _HoozzPlaySettingsPageState extends State<HoozzPlaySettingsPage> {
   Widget _generateItem(int index) {
     return InkWell(
       onTap: () {
-        Navigator.pushNamed(
-          context,
-          _itemList[index].page,
-        );
+        Navigator.pushNamed(context, _itemList[index].page);
       },
       child: Card(
         child: Padding(
@@ -53,10 +51,7 @@ class _HoozzPlaySettingsPageState extends State<HoozzPlaySettingsPage> {
             children: [
               Padding(
                 padding: const EdgeInsets.fromLTRB(10, 5, 15, 5),
-                child: Icon(
-                  _itemList[index].icon,
-                  color: mainFillColor,
-                ),
+                child: Icon(_itemList[index].icon, color: mainFillColor),
               ),
               Expanded(
                 child: Text(
@@ -79,15 +74,14 @@ class _HoozzPlaySettingsPageState extends State<HoozzPlaySettingsPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          title: Text(widget.title),
-        ),
-        body: ListView.builder(
-          itemCount: _itemList.length,
-          padding: const EdgeInsets.fromLTRB(5, 10, 5, 10),
-          itemBuilder: (context, index) {
-            return _generateItem(index);
-          },
-        ));
+      appBar: AppBar(title: Text(widget.title)),
+      body: ListView.builder(
+        itemCount: _itemList.length,
+        padding: const EdgeInsets.fromLTRB(5, 10, 5, 10),
+        itemBuilder: (context, index) {
+          return _generateItem(index);
+        },
+      ),
+    );
   }
 }

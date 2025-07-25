@@ -5,6 +5,7 @@
 ///
 
 import 'package:flutter/material.dart';
+import 'package:hoozz_play/core/vpn_ctrl.dart';
 
 class HoozzPlayHomePage extends StatefulWidget {
   const HoozzPlayHomePage({super.key});
@@ -37,6 +38,9 @@ class _HoozzPlayHomePageState extends State<HoozzPlayHomePage> {
       '/button_led',
     ),
   ];
+  bool _vpnValid = true;
+  bool _vpnState = false;
+  MaterialColor _switchActiveTrackColor = Colors.purple;
 
   Widget _generateItem(int index) {
     return InkWell(
@@ -79,6 +83,15 @@ class _HoozzPlayHomePageState extends State<HoozzPlayHomePage> {
 
   @override
   void initState() {
+    VPNCtrl.init(() {
+      if (mounted) {
+        setState(() {
+          _vpnValid = VPNCtrl.configValid;
+          _vpnState = VPNCtrl.connected;
+          _switchActiveTrackColor = _vpnState ? Colors.green : Colors.purple;
+        });
+      }
+    });
     super.initState();
   }
 
@@ -88,11 +101,27 @@ class _HoozzPlayHomePageState extends State<HoozzPlayHomePage> {
       appBar: AppBar(
         title: Text(widget.title),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.app_settings_alt),
-            onPressed: () {
-              Navigator.pushNamed(context, '/settings');
-            },
+          Visibility(
+            visible: _vpnValid,
+            child: Transform.scale(
+              scale: 0.8,
+              child: Switch(
+                activeTrackColor: _switchActiveTrackColor,
+                value: _vpnState,
+                onChanged: (value) {
+                  if (_vpnState) {
+                    VPNCtrl.disconnect();
+                  } else {
+                    VPNCtrl.connect().then((granted) {
+                      if (granted == false) setState(() => _vpnState = false);
+                    });
+                  }
+                  setState(() {
+                    _vpnState = value;
+                  });
+                },
+              ),
+            ),
           ),
         ],
       ),
@@ -106,6 +135,13 @@ class _HoozzPlayHomePageState extends State<HoozzPlayHomePage> {
           childAspectRatio: 0.85,
         ),
         itemBuilder: (context, index) => _generateItem(index),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.pushNamed(context, '/settings');
+        },
+        tooltip: 'Settings',
+        child: const Icon(Icons.build),
       ),
     );
   }

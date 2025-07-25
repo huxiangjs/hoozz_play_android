@@ -25,7 +25,13 @@ class DiscoverDeviceInfo {
   DateTime time;
 
   DiscoverDeviceInfo(
-      this.id, this.ip, this.port, this.classId, this.name, this.time);
+    this.id,
+    this.ip,
+    this.port,
+    this.classId,
+    this.name,
+    this.time,
+  );
 }
 
 class DeviceListChangeNotifier extends ChangeNotifier {
@@ -79,7 +85,9 @@ class SimpleCtrlDiscover {
 
     try {
       _udpSocket = await RawDatagramSocket.bind(
-          InternetAddress.anyIPv4, _discoverUDPPort);
+        InternetAddress.anyIPv4,
+        _discoverUDPPort,
+      );
       _udpSocket.broadcastEnabled = true;
 
       // Read data
@@ -88,7 +96,11 @@ class SimpleCtrlDiscover {
           Datagram? dg = _udpSocket.receive();
           if (dg != null) {
             // developer.log('received: ${dg.data}', name: _logName);
-            String data = utf8.decode(dg.data);
+            int endIndex = 0;
+            for (endIndex = 0; endIndex < dg.data.length; endIndex++) {
+              if (dg.data[endIndex] == 0) break;
+            }
+            String data = utf8.decode(dg.data.sublist(0, endIndex));
             String ip = dg.address.address;
             int port = dg.port;
             if (data.startsWith(_discoverRespond)) {
@@ -97,13 +109,21 @@ class SimpleCtrlDiscover {
               String id = data.substring(start + 2, start + 2 + _idLength);
               String name = data.substring(start + 2 + _idLength);
               DateTime time = DateTime.now();
+              // Read this parameter when using the discovery proxy
+              if (dg.data.length - endIndex > 7) {
+                String realIp = utf8.decode(dg.data.sublist(endIndex + 1));
+                developer.log('real ip: $realIp', name: _logName);
+                ip = realIp;
+              }
               // developer.log(
               //     '[$ip:$port] CLASS:$classId ID:$id NAME:$name TIME:${time.toString()}',
               //     name: _logName);
               if (id.length == _idLength) {
                 int classIdNum = int.parse(classId, radix: 16);
-                deviceListNotifier.set(id,
-                    DiscoverDeviceInfo(id, ip, port, classIdNum, name, time));
+                deviceListNotifier.set(
+                  id,
+                  DiscoverDeviceInfo(id, ip, port, classIdNum, name, time),
+                );
                 // LinkedHashMap<String, DiscoverDeviceInfo> deviceList =
                 //     deviceListNotifier.deviceList;
                 // developer.log('Device count: ${deviceList.length}',
@@ -124,6 +144,8 @@ class SimpleCtrlDiscover {
     // Send data
     List<int> data = utf8.encode(_discoverSay);
     InternetAddress destinationAddress = InternetAddress("255.255.255.255");
+    // for discovery proxy
+    InternetAddress destinationProxyAddress = InternetAddress("10.0.0.1");
 
     void sayHello(Timer timer) {
       developer.log('Say hello', name: _logName);
@@ -131,6 +153,8 @@ class SimpleCtrlDiscover {
         for (int i = 0; i < 5; i++) {
           try {
             _udpSocket.send(data, destinationAddress, _discoverUDPPort);
+            // for discovery proxy
+            _udpSocket.send(data, destinationProxyAddress, _discoverUDPPort);
             await Future.delayed(const Duration(seconds: 0, milliseconds: 100));
           } catch (e) {
             developer.log('Send exception', name: _logName);
@@ -140,8 +164,10 @@ class SimpleCtrlDiscover {
     }
 
     // Interval call
-    _discoverTimer =
-        Timer.periodic(Duration(seconds: _discoveryInterval), sayHello);
+    _discoverTimer = Timer.periodic(
+      Duration(seconds: _discoveryInterval),
+      sayHello,
+    );
     // Manual execution for the first time
     sayHello(_discoverTimer);
 
@@ -208,8 +234,10 @@ class _SimpleCtrlHandlePack {
     int loadLen = byteData.getUint32(2, Endian.little);
 
     if (cryptoType != Crypto.typeAES128ECB) {
-      developer.log('Mismatched encryption method: $cryptoType',
-          name: _logName);
+      developer.log(
+        'Mismatched encryption method: $cryptoType',
+        name: _logName,
+      );
       return null;
     }
 
@@ -233,8 +261,11 @@ class SimpleCtrlDataNotifier extends ChangeNotifier {
     return _dataQueue.removeFirst();
   }
 
-  Future<Uint8List?> waitData(int timeout, Function? ready,
-      [Function? then]) async {
+  Future<Uint8List?> waitData(
+    int timeout,
+    Function? ready, [
+    Function? then,
+  ]) async {
     Uint8List? retVal;
     Completer completer = Completer();
     _completerQueue.add(completer);
@@ -271,14 +302,17 @@ class SimpleCtrlHandle {
 
   static const int _ctrlLoadHeaderSize = 16;
   static const String _ctrlLoadMagicString = 'HOOZZ';
-  static final Uint8List _ctrlLoadMagic =
-      Uint8List.fromList(_ctrlLoadMagicString.codeUnits);
+  static final Uint8List _ctrlLoadMagic = Uint8List.fromList(
+    _ctrlLoadMagicString.codeUnits,
+  );
 
   static const int accessKeyLength = 16;
 
   final List<SimpleCtrlDataNotifier> _dataNotifier =
       List<SimpleCtrlDataNotifier>.generate(
-          _ctrlLoadTypeMax, (index) => SimpleCtrlDataNotifier());
+        _ctrlLoadTypeMax,
+        (index) => SimpleCtrlDataNotifier(),
+      );
 
   final DiscoverDeviceInfo _discoverDeviceInfo;
   final DeviceInfo _deviceInfo;
@@ -315,9 +349,10 @@ class SimpleCtrlHandle {
 
   Uint8List _buildPingPackData() {
     _SimpleCtrlHandlePack simpleCtrlHandlePack = _SimpleCtrlHandlePack(
-        _ctrlLoadTypePing,
-        CryptoAES128ECB(_accessKey),
-        _ctrlLoadHeaderSize + 1);
+      _ctrlLoadTypePing,
+      CryptoAES128ECB(_accessKey),
+      _ctrlLoadHeaderSize + 1,
+    );
     // Set header
     simpleCtrlHandlePack.addData(_buildLoadHeader(1));
     // Set data
@@ -347,14 +382,18 @@ class SimpleCtrlHandle {
     ByteData byteData = header.buffer.asByteData();
     int dataLen = byteData.getUint32(12, Endian.little);
 
-    Uint8List data =
-        load.sublist(_ctrlLoadHeaderSize, _ctrlLoadHeaderSize + dataLen);
+    Uint8List data = load.sublist(
+      _ctrlLoadHeaderSize,
+      _ctrlLoadHeaderSize + dataLen,
+    );
     // developer.log('$data', name: _logName);
 
     String magic = String.fromCharCodes(loadMagic);
     if (magic != _ctrlLoadMagicString) {
-      developer.log('Magic incorrect: $magic != $_ctrlLoadMagicString',
-          name: _logName);
+      developer.log(
+        'Magic incorrect: $magic != $_ctrlLoadMagicString',
+        name: _logName,
+      );
       return;
     }
 
@@ -381,8 +420,9 @@ class SimpleCtrlHandle {
         _currentParsePack = _SimpleCtrlHandlePack.factory(typeData, _accessKey);
         if (_currentParsePack != null) {
           developer.log(
-              'Pack: loadType ${_currentParsePack!.loadType}, loadLen ${_currentParsePack!.loadLen}',
-              name: _logName);
+            'Pack: loadType ${_currentParsePack!.loadType}, loadLen ${_currentParsePack!.loadLen}',
+            name: _logName,
+          );
         }
       }
 
@@ -424,9 +464,10 @@ class SimpleCtrlHandle {
 
   Uint8List _buildRequestPackData(Uint8List data) {
     _SimpleCtrlHandlePack simpleCtrlHandlePack = _SimpleCtrlHandlePack(
-        _ctrlLoadTypeRequest,
-        CryptoAES128ECB(_accessKey),
-        _ctrlLoadHeaderSize + data.length);
+      _ctrlLoadTypeRequest,
+      CryptoAES128ECB(_accessKey),
+      _ctrlLoadHeaderSize + data.length,
+    );
     // Set header
     simpleCtrlHandlePack.addData(_buildLoadHeader(data.length));
     // Set data
@@ -436,9 +477,10 @@ class SimpleCtrlHandle {
 
   Uint8List _buildTypeInfoPackData(int cmd, Uint8List data) {
     _SimpleCtrlHandlePack simpleCtrlHandlePack = _SimpleCtrlHandlePack(
-        _ctrlLoadTypeInfo,
-        CryptoAES128ECB(_accessKey),
-        _ctrlLoadHeaderSize + 1 + data.length);
+      _ctrlLoadTypeInfo,
+      CryptoAES128ECB(_accessKey),
+      _ctrlLoadHeaderSize + 1 + data.length,
+    );
     // Set header
     simpleCtrlHandlePack.addData(_buildLoadHeader(1 + data.length));
     // Set cmd
@@ -454,8 +496,9 @@ class SimpleCtrlHandle {
     Uint8List data = Uint8List.fromList(passwd.codeUnits);
     if (data.length > 16) {
       developer.log(
-          'Key must be less than or equal to 16 bytes. (${data.length})',
-          name: _logName);
+        'Key must be less than or equal to 16 bytes. (${data.length})',
+        name: _logName,
+      );
       return false;
     }
 
@@ -463,16 +506,19 @@ class SimpleCtrlHandle {
     await _dataNotifier[_ctrlLoadTypeInfo]
         .waitData(5, () => _write(setData))
         .then((Uint8List? value) {
-      if (value != null &&
-          value.length == 2 &&
-          value[0] == _ctrlInfoTypeSetPasswd &&
-          value[1] == _ctrlReturnOk) {
-        developer.log('Set password done', name: _logName);
-      } else {
-        developer.log('Set password failed, retVal: $value', name: _logName);
-        return false;
-      }
-    });
+          if (value != null &&
+              value.length == 2 &&
+              value[0] == _ctrlInfoTypeSetPasswd &&
+              value[1] == _ctrlReturnOk) {
+            developer.log('Set password done', name: _logName);
+          } else {
+            developer.log(
+              'Set password failed, retVal: $value',
+              name: _logName,
+            );
+            return false;
+          }
+        });
 
     return true;
   }
@@ -481,8 +527,11 @@ class SimpleCtrlHandle {
     Uint8List? retVal;
     Uint8List packData = _buildRequestPackData(data);
     if (existReturn) {
-      await _dataNotifier[_ctrlLoadTypeRequest]
-          .waitData(5, () => _write(packData), (value) => retVal = value);
+      await _dataNotifier[_ctrlLoadTypeRequest].waitData(
+        5,
+        () => _write(packData),
+        (value) => retVal = value,
+      );
     } else {
       await _write(packData);
     }
@@ -492,13 +541,17 @@ class SimpleCtrlHandle {
   Future<bool> initHandle() async {
     try {
       developer.log(
-          'Connecting: ${_discoverDeviceInfo.ip}:${_discoverDeviceInfo.port}',
-          name: _logName);
+        'Connecting: ${_discoverDeviceInfo.ip}:${_discoverDeviceInfo.port}',
+        name: _logName,
+      );
       _tcpSocket = await Socket.connect(
-          _discoverDeviceInfo.ip, _discoverDeviceInfo.port);
+        _discoverDeviceInfo.ip,
+        _discoverDeviceInfo.port,
+      );
       developer.log(
-          'Connected: ${_discoverDeviceInfo.ip}:${_discoverDeviceInfo.port}',
-          name: _logName);
+        'Connected: ${_discoverDeviceInfo.ip}:${_discoverDeviceInfo.port}',
+        name: _logName,
+      );
       stateNotifier.value = stateConnected;
       // Listen disconnected
       // _tcpSocket.drain().then((_) => destroyHandle());
@@ -521,19 +574,22 @@ class SimpleCtrlHandle {
 
     final Uint8List pingData = _buildPingPackData();
     // ping remote
-    _pingTimer =
-        Timer.periodic(Duration(seconds: _pingInterval), (Timer timer) {
+    _pingTimer = Timer.periodic(Duration(seconds: _pingInterval), (
+      Timer timer,
+    ) {
       // developer.log('Ping start', name: _logName);
       _dataNotifier[_ctrlLoadTypePing]
           .waitData(10, () => _write(pingData))
           .then((Uint8List? value) {
-        if (value != null && value.length == 1 && value[0] == _ctrlReturnOk) {
-          developer.log('Ping done', name: _logName);
-        } else {
-          developer.log('Ping failed, retVal: $value', name: _logName);
-          destroyHandle();
-        }
-      });
+            if (value != null &&
+                value.length == 1 &&
+                value[0] == _ctrlReturnOk) {
+              developer.log('Ping done', name: _logName);
+            } else {
+              developer.log('Ping failed, retVal: $value', name: _logName);
+              destroyHandle();
+            }
+          });
     });
 
     return true;
@@ -543,8 +599,9 @@ class SimpleCtrlHandle {
     if (stateNotifier.value == stateDestroy) return;
     stateNotifier.value = stateDestroy;
     developer.log(
-        'Destroy: ${_discoverDeviceInfo.ip}:${_discoverDeviceInfo.port}',
-        name: _logName);
+      'Destroy: ${_discoverDeviceInfo.ip}:${_discoverDeviceInfo.port}',
+      name: _logName,
+    );
     try {
       _pingTimer!.cancel();
       _pingTimer = null;

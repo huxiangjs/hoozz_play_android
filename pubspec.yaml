@@ -55,6 +55,10 @@ dependencies:
 
   encrypt: ^5.0.1
 
+  openvpn_flutter: ^1.3.4
+
+  file_picker: ^10.2.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
