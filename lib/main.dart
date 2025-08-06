@@ -44,11 +44,13 @@ class HoozzPlayApp extends StatelessWidget {
         '/license': (context) => const HoozzPlayLicensePage(),
         '/vpn': (context) => const HoozzPlayVPNPage(),
         '/mlx90640': (context) => const MLX90640HomePage(),
-        "/remote_sw": (context) => const RemoteSwitchHomePage(),
-        "/voice_led": (context) =>
+        '/remote_sw': (context) => const RemoteSwitchHomePage(),
+        '/voice_led': (context) =>
             DeviceListHomePage(DeviceBindingList.idVoiceLed),
-        "/button_led": (context) =>
+        '/button_led': (context) =>
             DeviceListHomePage(DeviceBindingList.idButtonLed),
+        '/smart_ir': (context) =>
+            DeviceListHomePage(DeviceBindingList.idSmartIr),
       },
     );
   }
