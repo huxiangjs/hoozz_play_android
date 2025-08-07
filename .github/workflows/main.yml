@@ -24,9 +24,21 @@ jobs:
 
     # Get Flutter SDK
     - name: Install Flutter SDK
-      run: |
-        sudo snap install flutter --classic
-        flutter doctor
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.32.7'
+
+    # Cache
+    - name: Cache dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          .dart_tool
+          .packages
+          .pub-cache
+        key: ${{ runner.os }}-flutter-${{ hashFiles('**/pubspec.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-flutter-
 
     # Install dependencies
     - name: Install dependencies
