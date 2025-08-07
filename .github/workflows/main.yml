@@ -10,6 +10,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    # Checkout the repository to the GitHub Actions runner
     steps:
     - uses: actions/checkout@v4
       with:
@@ -17,27 +18,23 @@ jobs:
 
     # Set up Java environment
     - name: Set up JDK 17
-      uses: actions/setup-java@v3
+      uses: actions/setup-java@v1
       with:
         java-version: '17'
-      # This step sets up the JDK for Android builds as Flutter requires Java
 
     # Get Flutter SDK
     - name: Install Flutter SDK
       run: |
         sudo snap install flutter --classic
         flutter doctor
-      # Install Flutter using snap and check if the installation was successful
 
     # Install dependencies
     - name: Install dependencies
       run: flutter pub get
-      # Fetches the package dependencies in the `pubspec.yaml` file
 
     # Run Android build command
     - name: Build APK
       run: flutter build apk --release
-      # Builds a release version of the Android APK
 
     # Optionally upload the built APK as an artifact of the workflow
     - name: Upload APK as artifact
@@ -45,4 +42,3 @@ jobs:
       with:
         name: release-apk
         path: build/app/outputs/flutter-apk/app-release.apk
-      # Uploads the generated APK so it can be downloaded from the workflow run page
