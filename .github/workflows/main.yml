@@ -3,6 +3,7 @@ name: Android CI
 on:
   push:
     branches: [ master ]
+    tags: [ 'v*' ]
   pull_request:
     branches: [ master ]
 
@@ -62,3 +63,39 @@ jobs:
       with:
         name: release-apk
         path: build/app/outputs/flutter-apk/app-release.apk
+
+    # Check tag
+    - name: Check if the event is a tag push
+      id: check_tag_push
+      run: |
+        if [[ $GITHUB_REF == refs/tags/* ]]; then
+          echo "Is tag push"
+          echo "::set-output name=IS_TAG_PUSH::true"
+        else
+          echo "::set-output name=IS_TAG_PUSH::false"
+        fi
+
+    # Create release
+    - name: Create Release
+      if: steps.check_tag_push.outputs.IS_TAG_PUSH == 'true'
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: Release ${{ github.ref }}
+        draft: false
+        prerelease: false
+
+    # Upload APK to release
+    - name: Upload Release Asset
+      if: steps.check_tag_push.outputs.IS_TAG_PUSH == 'true'
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: build/app/outputs/flutter-apk/app-release.apk
+        asset_name: hoozz_play_release_${{ github.ref_name }}.apk
+        asset_content_type: application/vnd.android.package-archive
