@@ -45,10 +45,6 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-flutter-
 
-    - name: Accept Android SDK licenses
-      run: |
-        yes | sdkmanager --licenses
-
     # Install dependencies
     - name: Install dependencies
       run: flutter pub get
