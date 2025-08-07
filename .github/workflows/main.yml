@@ -28,7 +28,7 @@ jobs:
       with:
         flutter-version: '3.32.7'
 
-    # Cache
+    # Cache Gradle and Android SDK
     - name: Cache dependencies
       uses: actions/cache@v3
       with:
@@ -36,9 +36,18 @@ jobs:
           .dart_tool
           .packages
           .pub-cache
-        key: ${{ runner.os }}-flutter-${{ hashFiles('**/pubspec.lock') }}
+          ~/.gradle
+          /usr/local/lib/android/sdk/licenses
+          /usr/local/lib/android/sdk/ndk
+          /usr/local/lib/android/sdk/cmake
+          /usr/local/lib/android/sdk/platforms
+        key: ${{ runner.os }}-flutter-${{ hashFiles('**/pubspec.lock') }}-${{ hashFiles('**/build.gradle') }}
         restore-keys: |
           ${{ runner.os }}-flutter-
+
+    - name: Accept Android SDK licenses
+      run: |
+        yes | sdkmanager --licenses
 
     # Install dependencies
     - name: Install dependencies
