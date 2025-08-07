@@ -76,9 +76,9 @@ jobs:
       run: |
         if [[ $GITHUB_REF == refs/tags/* ]]; then
           echo "Is tag push"
-          echo "::set-output name=IS_TAG_PUSH::true"
+          echo "IS_TAG_PUSH=true" >> $GITHUB_OUTPUT
         else
-          echo "::set-output name=IS_TAG_PUSH::false"
+          echo "IS_TAG_PUSH=false" >> $GITHUB_OUTPUT
         fi
 
     # Create release
