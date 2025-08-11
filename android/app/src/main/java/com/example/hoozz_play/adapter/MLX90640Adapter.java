@@ -119,19 +119,23 @@ public class MLX90640Adapter implements EventChannel.StreamHandler {
         };
     }
 
-    private class GetFrameThread extends Thread {
-        private boolean loop = false;
-    
-        public synchronized void setLoop(boolean newValue) {
-            loop = newValue;
-        }
+    private boolean loop = false;
 
-        public synchronized boolean getLoop() {
-            return loop;
-        }
+    private synchronized void setLoop(boolean newValue) {
+        loop = newValue;
+    }
+
+    private synchronized boolean getLoop() {
+        return loop;
+    }
+
+    private class GetFrameThread extends Thread {
 
         @Override
         public void run() {
+            if (!getLoop())
+                return;
+
             int ret = MLX90640.defaultConfig();
             Log.d(TAG, "defaultConfig result: " + ret);
             if (ret < 0) {
@@ -164,8 +168,6 @@ public class MLX90640Adapter implements EventChannel.StreamHandler {
 
             sendMessage(MSG_TYPE_OPEN, null);
             Log.d(TAG, "recv thread while");
-
-            setLoop(true);
 
             while (ret == 0 && getLoop()) {
                 float[] data = new float[32 * 24];
@@ -269,6 +271,8 @@ public class MLX90640Adapter implements EventChannel.StreamHandler {
             return;
         }
 
+        setLoop(true);
+
         usbSerial.register(context);
 
         /* Listen for USB plugging and unplugging events */
@@ -279,17 +283,22 @@ public class MLX90640Adapter implements EventChannel.StreamHandler {
     }
 
     private void stop() {
+        setLoop(false);
+
+        if (getFrameThread != null) {
+            try {
+                getFrameThread.join(1000);
+            } catch (InterruptedException  e) {
+            }
+            getFrameThread = null;
+        }
+
         MLX90640.setInputStream(null);
         MLX90640.setOutputStream(null);
 
         if (selectSerialDevice != null) {
             selectSerialDevice.syncClose();
             selectSerialDevice = null;
-        }
-
-        if (getFrameThread != null) {
-            getFrameThread.setLoop(false);
-            getFrameThread = null;
         }
 
         if (usbSerial != null) {

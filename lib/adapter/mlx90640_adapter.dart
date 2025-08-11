@@ -5,6 +5,7 @@
 ///
 
 import 'dart:async';
+import 'dart:collection';
 import 'dart:typed_data';
 import 'dart:ui' as ui;
 
@@ -35,7 +36,19 @@ abstract class MLX90640Adapter {
   static const int TYPE_UPDATE_FRAME_DATA = 6;
   static const int TYPE_UPDATE_TEMP_DATA = 7;
 
-  static void start(void Function(int type, Object value) onChanged) {
+  static final Queue<Completer> _waiters = Queue<Completer>();
+  static bool _needWait = false;
+
+  static Future<void> start(
+    void Function(int type, Object value) onChanged,
+  ) async {
+    if (_needWait) {
+      Completer completer = Completer();
+      _waiters.add(completer);
+      await completer.future;
+    }
+    _needWait = true;
+
     // Get a Stream object from the EventChannel object
     Stream<dynamic> stream = _eventChannel.receiveBroadcastStream();
     // Listen to the stream and handle each event
@@ -206,5 +219,11 @@ abstract class MLX90640Adapter {
 
   static void stop() {
     _subscription!.cancel();
+    if (_waiters.isNotEmpty) {
+      _waiters.first.complete();
+      _waiters.removeFirst();
+    } else {
+      _needWait = false;
+    }
   }
 }
