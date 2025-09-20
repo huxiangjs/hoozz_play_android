@@ -5,7 +5,7 @@ Hoozz Play is a fun application through which all supported hardware will be use
 This is a sub-repository, and the main repository is located at [Hoozz Play](https://github.com/huxiangjs/hoozz_play)
 
 **Build Status**
-[![Android CI](https://github.com/huxiangjs/hoozz_play_android/actions/workflows/main.yml/badge.svg?branch=master)](https://github.com/huxiangjs/hoozz_play_android/actions/workflows/main.yml)
+[![Android CI](https://github.com/huxiangjs/hoozz_play_android/actions/workflows/android.yml/badge.svg?branch=master)](https://github.com/huxiangjs/hoozz_play_android/actions/workflows/android.yml)
 
 ## Pull code
 
