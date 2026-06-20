@@ -102,7 +102,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
                 Visibility(
                   visible:
                       DeviceBindingList.binding[_deviceList[index].classId] !=
-                          null,
+                      null,
                   child: OutlinedButton(
                     onPressed: () {
                       Navigator.push(
@@ -116,7 +116,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
                             page.parameter = [
                               _deviceList[index],
                               body.describe,
-                              true,
+                              _deviceList[index].hasPassword,
                             ];
                             return ParameterStatefulWidget(page);
                           },
@@ -152,8 +152,9 @@ class _DiscoverPageState extends State<DiscoverPage> {
     _periodCall.ping();
 
     // Listen update
-    _simpleCtrlDiscover.deviceListNotifier
-        .addListener(() => _periodCall.ping());
+    _simpleCtrlDiscover.deviceListNotifier.addListener(
+      () => _periodCall.ping(),
+    );
   }
 
   @override
@@ -166,9 +167,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.title),
-      ),
+      appBar: AppBar(title: Text(widget.title)),
       body: SingleChildScrollView(
         scrollDirection: Axis.vertical,
         child: Padding(

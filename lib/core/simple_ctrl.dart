@@ -21,6 +21,7 @@ class DiscoverDeviceInfo {
   String ip;
   int port;
   int classId;
+  bool hasPassword;
   String name;
   DateTime time;
 
@@ -29,6 +30,7 @@ class DiscoverDeviceInfo {
     this.ip,
     this.port,
     this.classId,
+    this.hasPassword,
     this.name,
     this.time,
   );
@@ -107,7 +109,13 @@ class SimpleCtrlDiscover {
               int start = _discoverRespond.length;
               String classId = data.substring(start, start + 2);
               String id = data.substring(start + 2, start + 2 + _idLength);
-              String name = data.substring(start + 2 + _idLength);
+              bool hasPassword =
+                  data.substring(
+                    start + 2 + _idLength,
+                    start + 2 + _idLength + 1,
+                  ) !=
+                  '-'; // '-': no password; '*': has a password
+              String name = data.substring(start + 2 + _idLength + 1);
               DateTime time = DateTime.now();
               // Read this parameter when using the discovery proxy
               if (dg.data.length - endIndex > 7) {
@@ -122,7 +130,15 @@ class SimpleCtrlDiscover {
                 int classIdNum = int.parse(classId, radix: 16);
                 deviceListNotifier.set(
                   id,
-                  DiscoverDeviceInfo(id, ip, port, classIdNum, name, time),
+                  DiscoverDeviceInfo(
+                    id,
+                    ip,
+                    port,
+                    classIdNum,
+                    hasPassword,
+                    name,
+                    time,
+                  ),
                 );
                 // LinkedHashMap<String, DiscoverDeviceInfo> deviceList =
                 //     deviceListNotifier.deviceList;
