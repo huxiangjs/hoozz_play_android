@@ -22,6 +22,7 @@ class DiscoverDeviceInfo {
   int port;
   int classId;
   bool hasPassword;
+  int cryptoType;
   String name;
   DateTime time;
 
@@ -31,6 +32,7 @@ class DiscoverDeviceInfo {
     this.port,
     this.classId,
     this.hasPassword,
+    this.cryptoType,
     this.name,
     this.time,
   );
@@ -108,14 +110,18 @@ class SimpleCtrlDiscover {
             if (data.startsWith(_discoverRespond)) {
               int start = _discoverRespond.length;
               String classId = data.substring(start, start + 2);
-              String id = data.substring(start + 2, start + 2 + _idLength);
-              bool hasPassword =
-                  data.substring(
-                    start + 2 + _idLength,
-                    start + 2 + _idLength + 1,
-                  ) !=
-                  '-'; // '-': no password; '*': has a password
-              String name = data.substring(start + 2 + _idLength + 1);
+              start += 2;
+              int cryptoType = int.parse(
+                data.substring(start, start + 2),
+                radix: 16,
+              );
+              start += 2;
+              // '-': no password; '*': has a password
+              bool hasPassword = data.substring(start, start + 1) != '-';
+              start += 1;
+              String id = data.substring(start, start + _idLength);
+              start += _idLength;
+              String name = data.substring(start);
               DateTime time = DateTime.now();
               // Read this parameter when using the discovery proxy
               if (dg.data.length - endIndex > 7) {
@@ -136,6 +142,7 @@ class SimpleCtrlDiscover {
                     port,
                     classIdNum,
                     hasPassword,
+                    cryptoType,
                     name,
                     time,
                   ),
@@ -217,12 +224,13 @@ class _SimpleCtrlHandlePack {
 
   Uint8List get loadData => crypto.done();
 
+  static const int typeLen = 5;
+
   Uint8List pack() {
-    ByteData byteData = ByteData(6);
+    ByteData byteData = ByteData(typeLen);
     byteData.setUint8(0, loadType);
-    byteData.setUint8(1, crypto.cryptoType);
     Uint8List lodeData = loadData;
-    byteData.setUint32(2, lodeData.length, Endian.little);
+    byteData.setUint32(1, lodeData.length, Endian.little);
 
     BytesBuilder builder = BytesBuilder();
     builder.add(byteData.buffer.asUint8List());
@@ -241,23 +249,24 @@ class _SimpleCtrlHandlePack {
     return retVal;
   }
 
-  static const int typeLen = 6;
-
-  static _SimpleCtrlHandlePack? factory(Uint8List data, Uint8List? passwd) {
+  static _SimpleCtrlHandlePack? factory(
+    Uint8List data,
+    int cryptoType,
+    Uint8List? passwd,
+  ) {
     ByteData byteData = data.buffer.asByteData();
     int loadType = byteData.getUint8(0);
-    int cryptoType = byteData.getUint8(1);
-    int loadLen = byteData.getUint32(2, Endian.little);
+    int loadLen = byteData.getUint32(1, Endian.little);
+    Crypto? crypto = Crypto.getCrypto(cryptoType, passwd);
 
-    if (cryptoType != Crypto.typeAES128ECB) {
+    if (crypto == null) {
       developer.log(
-        'Mismatched encryption method: $cryptoType',
+        'Unsupported encryption method: $cryptoType',
         name: _logName,
       );
       return null;
     }
-
-    return _SimpleCtrlHandlePack(loadType, CryptoAES128ECB(passwd), loadLen);
+    return _SimpleCtrlHandlePack(loadType, crypto, loadLen);
   }
 }
 
@@ -333,6 +342,7 @@ class SimpleCtrlHandle {
   final DiscoverDeviceInfo _discoverDeviceInfo;
   final DeviceInfo _deviceInfo;
   Uint8List? _accessKey;
+  late int _cryptoType;
 
   final ValueNotifier<int> stateNotifier = ValueNotifier<int>(stateInit);
 
@@ -347,6 +357,7 @@ class SimpleCtrlHandle {
       List<int> list = _deviceInfo.accessKey.codeUnits;
       _accessKey = Uint8List.fromList(list);
     }
+    _cryptoType = _discoverDeviceInfo.cryptoType;
   }
 
   SimpleCtrlDataNotifier get notifyNotifier =>
@@ -364,9 +375,11 @@ class SimpleCtrlHandle {
   }
 
   Uint8List _buildPingPackData() {
+    Crypto? crypto = Crypto.getCrypto(_cryptoType, _accessKey);
+    if (crypto == null) return Uint8List(0);
     _SimpleCtrlHandlePack simpleCtrlHandlePack = _SimpleCtrlHandlePack(
       _ctrlLoadTypePing,
-      CryptoAES128ECB(_accessKey),
+      crypto,
       _ctrlLoadHeaderSize + 1,
     );
     // Set header
@@ -393,10 +406,19 @@ class SimpleCtrlHandle {
 
     /* |--Magic(6bytes)--|--Reserved(6bytes)--|--Data size(4bytes)--| */
     Uint8List load = pack.loadData;
+    if (load.length < _ctrlLoadHeaderSize) {
+      developer.log('Load heander length incorrect', name: _logName);
+      return;
+    }
+
     Uint8List header = load.sublist(0, _ctrlLoadHeaderSize);
     Uint8List loadMagic = header.sublist(0, _ctrlLoadMagic.length);
     ByteData byteData = header.buffer.asByteData();
     int dataLen = byteData.getUint32(12, Endian.little);
+    if (load.length < _ctrlLoadHeaderSize + dataLen) {
+      developer.log('Load data length incorrect', name: _logName);
+      return;
+    }
 
     Uint8List data = load.sublist(
       _ctrlLoadHeaderSize,
@@ -433,7 +455,11 @@ class SimpleCtrlHandle {
         }
         // developer.log('Type data: $typeData', name: _logName);
         // Start
-        _currentParsePack = _SimpleCtrlHandlePack.factory(typeData, _accessKey);
+        _currentParsePack = _SimpleCtrlHandlePack.factory(
+          typeData,
+          _cryptoType,
+          _accessKey,
+        );
         if (_currentParsePack != null) {
           developer.log(
             'Pack: loadType ${_currentParsePack!.loadType}, loadLen ${_currentParsePack!.loadLen}',
@@ -479,9 +505,11 @@ class SimpleCtrlHandle {
   }
 
   Uint8List _buildRequestPackData(Uint8List data) {
+    Crypto? crypto = Crypto.getCrypto(_cryptoType, _accessKey);
+    if (crypto == null) return Uint8List(0);
     _SimpleCtrlHandlePack simpleCtrlHandlePack = _SimpleCtrlHandlePack(
       _ctrlLoadTypeRequest,
-      CryptoAES128ECB(_accessKey),
+      crypto,
       _ctrlLoadHeaderSize + data.length,
     );
     // Set header
@@ -492,9 +520,11 @@ class SimpleCtrlHandle {
   }
 
   Uint8List _buildTypeInfoPackData(int cmd, Uint8List data) {
+    Crypto? crypto = Crypto.getCrypto(_cryptoType, _accessKey);
+    if (crypto == null) return Uint8List(0);
     _SimpleCtrlHandlePack simpleCtrlHandlePack = _SimpleCtrlHandlePack(
       _ctrlLoadTypeInfo,
-      CryptoAES128ECB(_accessKey),
+      crypto,
       _ctrlLoadHeaderSize + 1 + data.length,
     );
     // Set header
