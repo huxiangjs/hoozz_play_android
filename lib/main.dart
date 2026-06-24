@@ -52,6 +52,8 @@ class HoozzPlayApp extends StatelessWidget {
         '/smart_ir': (context) =>
             DeviceListHomePage(DeviceBindingList.idSmartIr),
         '/sensor': (context) => DeviceListHomePage(DeviceBindingList.idSensor),
+        '/pwd_sync': (context) =>
+            DeviceListHomePage(DeviceBindingList.idPwdSync),
       },
     );
   }
