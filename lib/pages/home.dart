@@ -39,6 +39,7 @@ class _HoozzPlayHomePageState extends State<HoozzPlayHomePage> {
     ),
     _ItemInfo('images/product_view_unknow.png', 'SMART IR', '/smart_ir'),
     _ItemInfo('images/product_view_sensor.png', 'SENSOR', '/sensor'),
+    _ItemInfo('images/product_view_pwd_sync.png', 'PWD SYNC', '/pwd_sync'),
   ];
   bool _vpnValid = true;
   bool _vpnState = false;
