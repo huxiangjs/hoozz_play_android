@@ -55,7 +55,8 @@ class SimpleCtrlTool {
 }
 
 class SimpleCtrlDiscover {
-  final int _discoverUDPPort = 54542;
+  final int _discoverSendUDPPort = 54542;
+  final int _discoverRecvUDPPort = 54543;
   final String _discoverSay = 'HOOZZ?';
   final String _discoverRespond = 'HOOZZ:';
   final int _idLength = 14;
@@ -90,7 +91,7 @@ class SimpleCtrlDiscover {
     try {
       _udpSocket = await RawDatagramSocket.bind(
         InternetAddress.anyIPv4,
-        _discoverUDPPort,
+        _discoverRecvUDPPort,
       );
       _udpSocket.broadcastEnabled = true;
 
@@ -175,9 +176,13 @@ class SimpleCtrlDiscover {
       () async {
         for (int i = 0; i < 5; i++) {
           try {
-            _udpSocket.send(data, destinationAddress, _discoverUDPPort);
+            _udpSocket.send(data, destinationAddress, _discoverSendUDPPort);
             // for discovery proxy
-            _udpSocket.send(data, destinationProxyAddress, _discoverUDPPort);
+            _udpSocket.send(
+              data,
+              destinationProxyAddress,
+              _discoverSendUDPPort,
+            );
             await Future.delayed(const Duration(seconds: 0, milliseconds: 100));
           } catch (e) {
             developer.log('Send exception', name: _logName);
