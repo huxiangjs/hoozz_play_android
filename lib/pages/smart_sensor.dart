@@ -295,7 +295,7 @@ class SensorDeviceCtrlPageState extends ParameterStatefulState {
 
 // Config device page
 class SensorConfigDevicePageState extends ParameterStatefulState {
-  DeviceInfo _deviceInfo = DeviceInfo();
+  final InfoEdit _infoEdit = InfoEdit(deviceInfo: DeviceInfo());
   late DiscoverDeviceInfo _discoverDeviceInfo;
   late String _storageName;
   late bool _allowSetPasswd;
@@ -304,15 +304,15 @@ class SensorConfigDevicePageState extends ParameterStatefulState {
   Future<void> _deviceInfoLoad() async {
     DeviceStorage storage = DeviceStorage(_storageName);
     await storage.load();
-    if (storage.deviceList[_deviceInfo.id] != null) {
-      _deviceInfo = storage.deviceList[_deviceInfo.id]!;
+    if (storage.deviceList[_infoEdit.deviceInfo.id] != null) {
+      _infoEdit.deviceInfo = storage.deviceList[_infoEdit.deviceInfo.id]!;
     }
   }
 
   Future<void> _deviceInfoSave() async {
     DeviceStorage storage = DeviceStorage(_storageName);
     await storage.load();
-    storage.deviceList[_deviceInfo.id] = _deviceInfo;
+    storage.deviceList[_infoEdit.deviceInfo.id] = _infoEdit.deviceInfo;
     await storage.save();
   }
 
@@ -325,9 +325,10 @@ class SensorConfigDevicePageState extends ParameterStatefulState {
     _allowSetPasswd = parameter[2] as bool;
     if (parameter.length > 3) {
       _simpleCtrlHandle = parameter[3] as SimpleCtrlHandle;
+      _infoEdit.ctrlReady = true;
     }
-    _deviceInfo.nickName = _discoverDeviceInfo.name;
-    _deviceInfo.id = _discoverDeviceInfo.id;
+    _infoEdit.deviceInfo.nickName = _discoverDeviceInfo.name;
+    _infoEdit.deviceInfo.id = _discoverDeviceInfo.id;
     _deviceInfoLoad().then((value) => setState(() {}));
   }
 
@@ -336,13 +337,24 @@ class SensorConfigDevicePageState extends ParameterStatefulState {
     return DeviceConfig(
       allowSetPasswd: _allowSetPasswd,
       discoverDeviceInfo: _discoverDeviceInfo,
-      deviceInfo: _deviceInfo,
-      onSavePressed: (deviceInfo) {
-        if (_simpleCtrlHandle != null) {
+      infoEdit: _infoEdit,
+      onSavePressed: (infoEdit) {
+        if (infoEdit.ctrlReady) {
           SimpleShowDialog.show(context, "Verifying device...");
-          _simpleCtrlHandle!.setPassword(deviceInfo.accessKey).then((
-            bool value,
-          ) {
+          Future<bool> result = () async {
+            // Set name
+            if (infoEdit.syncName) {
+              bool ret = await _simpleCtrlHandle!.setName(
+                infoEdit.deviceInfo.nickName,
+              );
+              if (ret != true) return false;
+            }
+            // Set password
+            return await _simpleCtrlHandle!.setPassword(
+              infoEdit.deviceInfo.accessKey,
+            );
+          }.call();
+          result.then((bool value) {
             if (value) {
               _deviceInfoSave();
               Navigator.popUntil(
@@ -365,7 +377,7 @@ class SensorConfigDevicePageState extends ParameterStatefulState {
           });
         } else {
           if (_allowSetPasswd == false) {
-            deviceInfo.accessKey = '';
+            infoEdit.deviceInfo.accessKey = '';
           }
           _deviceInfoSave();
           Navigator.pop(context);

@@ -538,8 +538,36 @@ class SimpleCtrlHandle {
     return simpleCtrlHandlePack.pack();
   }
 
+  Future<bool> setName(String name) async {
+    Uint8List data = utf8.encode(name);
+    if (data.length > 64) {
+      developer.log(
+        'Name must be less than or equal to 64 bytes. (${data.length})',
+        name: _logName,
+      );
+      return false;
+    }
+
+    Uint8List setData = _buildTypeInfoPackData(_ctrlInfoTypeSetName, data);
+    await _dataNotifier[_ctrlLoadTypeInfo]
+        .waitData(5, () => _write(setData))
+        .then((Uint8List? value) {
+          if (value != null &&
+              value.length == 2 &&
+              value[0] == _ctrlInfoTypeSetName &&
+              value[1] == _ctrlReturnOk) {
+            developer.log('Set name done', name: _logName);
+          } else {
+            developer.log('Set name failed, retVal: $value', name: _logName);
+            return false;
+          }
+        });
+
+    return true;
+  }
+
   Future<bool> setPassword(String passwd) async {
-    Uint8List data = Uint8List.fromList(passwd.codeUnits);
+    Uint8List data = utf8.encode(passwd);
     if (data.length > 16) {
       developer.log(
         'Key must be less than or equal to 16 bytes. (${data.length})',

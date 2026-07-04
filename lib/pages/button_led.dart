@@ -28,13 +28,13 @@ class ButtonLEDDeviceCtrlPageState extends ParameterStatefulState {
   final List<Color> _localColorShow = [
     Colors.redAccent,
     Colors.green,
-    Colors.blue
+    Colors.blue,
   ];
   List<double> _localColorValue = [0.0, 0.0, 0.0];
   final List<Color> _remoteColorShow = [
     Colors.orangeAccent,
     Colors.greenAccent,
-    Colors.lightBlueAccent
+    Colors.lightBlueAccent,
   ];
   List<double> _remoteColorValue = [0.0, 0.0, 0.0];
   late SimpleCtrlHandle _simpleCtrlHandle;
@@ -61,40 +61,48 @@ class ButtonLEDDeviceCtrlPageState extends ParameterStatefulState {
           _simpleCtrlHandle.notifyNotifier;
 
       // Set gradient
-      _gradientListCall = GradientListCall<double>(_remoteColorValue, 30, 7,
-          (List<double> expectValue, List<double> currentValue,
-              List<double> stepSize) {
-        double step;
-        int index;
-        List<double> newValue = [...currentValue];
+      _gradientListCall = GradientListCall<double>(
+        _remoteColorValue,
+        30,
+        7,
+        (
+          List<double> expectValue,
+          List<double> currentValue,
+          List<double> stepSize,
+        ) {
+          double step;
+          int index;
+          List<double> newValue = [...currentValue];
 
-        for (index = 0; index < 3; index++) {
-          if (currentValue[index] > expectValue[index]) {
-            step = currentValue[index] - expectValue[index];
-            step = step > stepSize[0] ? stepSize[0] : step;
-            newValue[index] -= step;
-          } else if (currentValue[index] < expectValue[index]) {
-            step = expectValue[index] - currentValue[index];
-            step = step > stepSize[0] ? stepSize[0] : step;
-            newValue[index] += step;
-          }
-        }
-
-        return newValue;
-      }, (List<double> currentValue) {
-        if (mounted) {
-          setState(() {
-            // If consistent, update synchronously
-            if (_localColorValue[0] == _remoteColorValue[0] &&
-                _localColorValue[1] == _remoteColorValue[1] &&
-                _localColorValue[2] == _remoteColorValue[2]) {
-              _localColorValue = [...currentValue];
+          for (index = 0; index < 3; index++) {
+            if (currentValue[index] > expectValue[index]) {
+              step = currentValue[index] - expectValue[index];
+              step = step > stepSize[0] ? stepSize[0] : step;
+              newValue[index] -= step;
+            } else if (currentValue[index] < expectValue[index]) {
+              step = expectValue[index] - currentValue[index];
+              step = step > stepSize[0] ? stepSize[0] : step;
+              newValue[index] += step;
             }
-            _remoteColorValue = [...currentValue];
-          });
-          // developer.log('Refresh color: $_remoteColorValue', name: _logName);
-        }
-      });
+          }
+
+          return newValue;
+        },
+        (List<double> currentValue) {
+          if (mounted) {
+            setState(() {
+              // If consistent, update synchronously
+              if (_localColorValue[0] == _remoteColorValue[0] &&
+                  _localColorValue[1] == _remoteColorValue[1] &&
+                  _localColorValue[2] == _remoteColorValue[2]) {
+                _localColorValue = [...currentValue];
+              }
+              _remoteColorValue = [...currentValue];
+            });
+            // developer.log('Refresh color: $_remoteColorValue', name: _logName);
+          }
+        },
+      );
 
       // Listen color notify
       simpleCtrlDataNotifier.addListener(() {
@@ -104,7 +112,7 @@ class ButtonLEDDeviceCtrlPageState extends ParameterStatefulState {
           List<double> value = [
             data[2].toDouble(),
             data[1].toDouble(),
-            data[0].toDouble()
+            data[0].toDouble(),
           ];
           // Gradient animation
           _gradientListCall.set(value);
@@ -127,7 +135,7 @@ class ButtonLEDDeviceCtrlPageState extends ParameterStatefulState {
           List<double> newValue = [
             value[4].toDouble(),
             value[3].toDouble(),
-            value[2].toDouble()
+            value[2].toDouble(),
           ];
           // Gradient animation
           _gradientListCall.set(newValue);
@@ -146,7 +154,9 @@ class ButtonLEDDeviceCtrlPageState extends ParameterStatefulState {
           });
         } else {
           Navigator.popUntil(
-              context, (route) => route.settings.name == '/button_led');
+            context,
+            (route) => route.settings.name == '/button_led',
+          );
           SimpleSnackBar.show(context, 'Abnormal device data', Colors.red);
         }
       });
@@ -155,7 +165,9 @@ class ButtonLEDDeviceCtrlPageState extends ParameterStatefulState {
     } else if (_simpleCtrlHandle.stateNotifier.value ==
         SimpleCtrlHandle.stateDestroy) {
       Navigator.popUntil(
-          context, (route) => route.settings.name == '/button_led');
+        context,
+        (route) => route.settings.name == '/button_led',
+      );
       SimpleSnackBar.show(context, 'Device connection failed', Colors.red);
     }
   }
@@ -199,7 +211,8 @@ class ButtonLEDDeviceCtrlPageState extends ParameterStatefulState {
     if (_isFirstRender) {
       _isFirstRender = false;
       WidgetsBinding.instance.addPostFrameCallback(
-          (_) => SimpleShowDialog.show(context, 'Device connecting...'));
+        (_) => SimpleShowDialog.show(context, 'Device connecting...'),
+      );
     }
 
     return Scaffold(
@@ -222,7 +235,7 @@ class ButtonLEDDeviceCtrlPageState extends ParameterStatefulState {
                       _discoverDeviceInfo,
                       _storageName,
                       true,
-                      _simpleCtrlHandle
+                      _simpleCtrlHandle,
                     ];
                     return ParameterStatefulWidget(page);
                   },
@@ -244,13 +257,17 @@ class ButtonLEDDeviceCtrlPageState extends ParameterStatefulState {
                 _localColorValue = [
                   value.red.toDouble(),
                   value.green.toDouble(),
-                  value.blue.toDouble()
+                  value.blue.toDouble(),
                 ];
               });
               _remoteUpdateColor();
             },
-            pickerColor: Color.fromARGB(0xFF, _localColorValue[0].toInt(),
-                _localColorValue[1].toInt(), _localColorValue[2].toInt()),
+            pickerColor: Color.fromARGB(
+              0xFF,
+              _localColorValue[0].toInt(),
+              _localColorValue[1].toInt(),
+              _localColorValue[2].toInt(),
+            ),
           ),
           Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -278,11 +295,12 @@ class ButtonLEDDeviceCtrlPageState extends ParameterStatefulState {
                    * allow secondaryTrackValue to be rendered in time.
                    */
                   value: min(
-                      _localColorValue[index] +
-                          _shakeSlider +
-                          Random().nextDouble() +
-                          0.5,
-                      255),
+                    _localColorValue[index] +
+                        _shakeSlider +
+                        Random().nextDouble() +
+                        0.5,
+                    255,
+                  ),
                   activeColor: _localColorShow[index],
                   secondaryTrackValue: _remoteColorValue[index],
                   secondaryActiveColor: _remoteColorShow[index],
@@ -299,7 +317,7 @@ class ButtonLEDDeviceCtrlPageState extends ParameterStatefulState {
 
 // Config device page
 class ButtonLEDConfigDevicePageState extends ParameterStatefulState {
-  DeviceInfo _deviceInfo = DeviceInfo();
+  final InfoEdit _infoEdit = InfoEdit(deviceInfo: DeviceInfo());
   late DiscoverDeviceInfo _discoverDeviceInfo;
   late String _storageName;
   late bool _allowSetPasswd;
@@ -308,15 +326,15 @@ class ButtonLEDConfigDevicePageState extends ParameterStatefulState {
   Future<void> _deviceInfoLoad() async {
     DeviceStorage storage = DeviceStorage(_storageName);
     await storage.load();
-    if (storage.deviceList[_deviceInfo.id] != null) {
-      _deviceInfo = storage.deviceList[_deviceInfo.id]!;
+    if (storage.deviceList[_infoEdit.deviceInfo.id] != null) {
+      _infoEdit.deviceInfo = storage.deviceList[_infoEdit.deviceInfo.id]!;
     }
   }
 
   Future<void> _deviceInfoSave() async {
     DeviceStorage storage = DeviceStorage(_storageName);
     await storage.load();
-    storage.deviceList[_deviceInfo.id] = _deviceInfo;
+    storage.deviceList[_infoEdit.deviceInfo.id] = _infoEdit.deviceInfo;
     await storage.save();
   }
 
@@ -329,9 +347,10 @@ class ButtonLEDConfigDevicePageState extends ParameterStatefulState {
     _allowSetPasswd = parameter[2] as bool;
     if (parameter.length > 3) {
       _simpleCtrlHandle = parameter[3] as SimpleCtrlHandle;
+      _infoEdit.ctrlReady = true;
     }
-    _deviceInfo.nickName = _discoverDeviceInfo.name;
-    _deviceInfo.id = _discoverDeviceInfo.id;
+    _infoEdit.deviceInfo.nickName = _discoverDeviceInfo.name;
+    _infoEdit.deviceInfo.id = _discoverDeviceInfo.id;
     _deviceInfoLoad().then((value) => setState(() {}));
   }
 
@@ -340,28 +359,47 @@ class ButtonLEDConfigDevicePageState extends ParameterStatefulState {
     return DeviceConfig(
       allowSetPasswd: _allowSetPasswd,
       discoverDeviceInfo: _discoverDeviceInfo,
-      deviceInfo: _deviceInfo,
-      onSavePressed: (deviceInfo) {
-        if (_simpleCtrlHandle != null) {
+      infoEdit: _infoEdit,
+      onSavePressed: (infoEdit) {
+        if (infoEdit.ctrlReady) {
           SimpleShowDialog.show(context, "Verifying device...");
-          _simpleCtrlHandle!
-              .setPassword(deviceInfo.accessKey)
-              .then((bool value) {
+          Future<bool> result = () async {
+            // Set name
+            if (infoEdit.syncName) {
+              bool ret = await _simpleCtrlHandle!.setName(
+                infoEdit.deviceInfo.nickName,
+              );
+              if (ret != true) return false;
+            }
+            // Set password
+            return await _simpleCtrlHandle!.setPassword(
+              infoEdit.deviceInfo.accessKey,
+            );
+          }.call();
+          result.then((bool value) {
             if (value) {
               _deviceInfoSave();
               Navigator.popUntil(
-                  context, (route) => route.settings.name == '/button_led');
+                context,
+                (route) => route.settings.name == '/button_led',
+              );
               SimpleSnackBar.show(
-                  context, 'Device information saved', Colors.green);
+                context,
+                'Device information saved',
+                Colors.green,
+              );
             } else {
               Navigator.pop(context);
-              SimpleSnackBar.show(context,
-                  'Failed to configure device information', Colors.red);
+              SimpleSnackBar.show(
+                context,
+                'Failed to configure device information',
+                Colors.red,
+              );
             }
           });
         } else {
           if (_allowSetPasswd == false) {
-            deviceInfo.accessKey = '';
+            infoEdit.deviceInfo.accessKey = '';
           }
           _deviceInfoSave();
           Navigator.pop(context);

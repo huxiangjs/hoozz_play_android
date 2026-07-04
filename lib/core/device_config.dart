@@ -18,58 +18,65 @@ const String _logName = 'Device Configure';
 class _DeviceInofInputDecoration extends InputDecoration {
   static final OutlineInputBorder disabledOutlineInputBorder =
       OutlineInputBorder(
-    borderRadius: BorderRadius.circular(24),
-    borderSide: const BorderSide(color: Colors.grey, width: 1.0),
-    gapPadding: 6,
-  );
+        borderRadius: BorderRadius.circular(24),
+        borderSide: const BorderSide(color: Colors.grey, width: 1.0),
+        gapPadding: 6,
+      );
 
   static final OutlineInputBorder enabledOutlineInputBorder =
       OutlineInputBorder(
-    borderRadius: BorderRadius.circular(24),
-    borderSide: const BorderSide(color: mainFillColor, width: 2.0),
-    gapPadding: 6,
-  );
+        borderRadius: BorderRadius.circular(24),
+        borderSide: const BorderSide(color: mainFillColor, width: 2.0),
+        gapPadding: 6,
+      );
 
   _DeviceInofInputDecoration(labelText, hintText, [Widget? suffixIcon])
-      : super(
-          labelText: labelText,
-          hintText: hintText,
-          suffixIcon: suffixIcon,
-          labelStyle: const TextStyle(fontSize: 20, fontFamily: mainFontFamily),
-          hintStyle: const TextStyle(fontSize: 20, fontFamily: subFontFamily),
-          // floatingLabelBehavior: FloatingLabelBehavior.always,
-          contentPadding: const EdgeInsets.symmetric(
-            vertical: 15,
-            horizontal: 15,
-          ),
-          border: disabledOutlineInputBorder,
-          enabledBorder: disabledOutlineInputBorder,
-          focusedBorder: enabledOutlineInputBorder,
-          disabledBorder: disabledOutlineInputBorder,
-        );
+    : super(
+        labelText: labelText,
+        hintText: hintText,
+        suffixIcon: suffixIcon,
+        labelStyle: const TextStyle(fontSize: 20, fontFamily: mainFontFamily),
+        hintStyle: const TextStyle(fontSize: 20, fontFamily: subFontFamily),
+        // floatingLabelBehavior: FloatingLabelBehavior.always,
+        contentPadding: const EdgeInsets.symmetric(
+          vertical: 15,
+          horizontal: 15,
+        ),
+        border: disabledOutlineInputBorder,
+        enabledBorder: disabledOutlineInputBorder,
+        focusedBorder: enabledOutlineInputBorder,
+        disabledBorder: disabledOutlineInputBorder,
+      );
+}
+
+class InfoEdit {
+  DeviceInfo deviceInfo;
+  bool ctrlReady = false;
+  bool syncName = false;
+
+  InfoEdit({required this.deviceInfo});
 }
 
 class DeviceConfig extends StatelessWidget {
   final bool allowSetPasswd;
   final DiscoverDeviceInfo discoverDeviceInfo;
-  final DeviceInfo deviceInfo;
+  final InfoEdit infoEdit;
   final Widget child;
-  final Function(DeviceInfo deviceInfo) onSavePressed;
+  final Function(InfoEdit infoEdit) onSavePressed;
 
-  const DeviceConfig(
-      {super.key,
-      required this.allowSetPasswd,
-      required this.discoverDeviceInfo,
-      required this.deviceInfo,
-      this.child = const Text(''),
-      required this.onSavePressed});
+  const DeviceConfig({
+    super.key,
+    required this.allowSetPasswd,
+    required this.discoverDeviceInfo,
+    required this.infoEdit,
+    this.child = const Text(''),
+    required this.onSavePressed,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Configure device"),
-      ),
+      appBar: AppBar(title: const Text("Configure device")),
       body: SingleChildScrollView(
         scrollDirection: Axis.vertical,
         child: StatefulBuilder(
@@ -87,7 +94,9 @@ class DeviceConfig extends StatelessWidget {
                         child: Text(
                           discoverDeviceInfo.name,
                           style: const TextStyle(
-                              fontSize: 18, fontFamily: subFontFamily),
+                            fontSize: 18,
+                            fontFamily: subFontFamily,
+                          ),
                         ),
                       ),
                     ],
@@ -100,15 +109,17 @@ class DeviceConfig extends StatelessWidget {
                       const Text('CLASS: ', style: TextStyle(fontSize: 18)),
                       Expanded(
                         child: Text(
-                          DeviceBindingList
-                                      .binding[discoverDeviceInfo.classId] ==
+                          DeviceBindingList.binding[discoverDeviceInfo
+                                      .classId] ==
                                   null
                               ? 'Unknown'
                               : DeviceBindingList
-                                  .binding[discoverDeviceInfo.classId]!
-                                  .describe,
+                                    .binding[discoverDeviceInfo.classId]!
+                                    .describe,
                           style: const TextStyle(
-                              fontSize: 18, fontFamily: subFontFamily),
+                            fontSize: 18,
+                            fontFamily: subFontFamily,
+                          ),
                         ),
                       ),
                     ],
@@ -123,7 +134,9 @@ class DeviceConfig extends StatelessWidget {
                         child: Text(
                           discoverDeviceInfo.id,
                           style: const TextStyle(
-                              fontSize: 18, fontFamily: subFontFamily),
+                            fontSize: 18,
+                            fontFamily: subFontFamily,
+                          ),
                         ),
                       ),
                     ],
@@ -138,7 +151,9 @@ class DeviceConfig extends StatelessWidget {
                         child: Text(
                           '${discoverDeviceInfo.ip} : ${discoverDeviceInfo.port}',
                           style: const TextStyle(
-                              fontSize: 18, fontFamily: subFontFamily),
+                            fontSize: 18,
+                            fontFamily: subFontFamily,
+                          ),
                         ),
                       ),
                     ],
@@ -148,12 +163,15 @@ class DeviceConfig extends StatelessWidget {
                 Padding(
                   padding: const EdgeInsets.all(10),
                   child: TextField(
-                    controller:
-                        TextEditingController(text: deviceInfo.nickName),
-                    onChanged: (value) =>
-                        deviceInfo.nickName = value.replaceAll('\r\n', '\n'),
+                    controller: TextEditingController(
+                      text: infoEdit.deviceInfo.nickName,
+                    ),
+                    onChanged: (value) => infoEdit.deviceInfo.nickName = value
+                        .replaceAll('\r\n', '\n'),
                     style: const TextStyle(
-                        fontSize: 20, fontFamily: subFontFamily),
+                      fontSize: 20,
+                      fontFamily: subFontFamily,
+                    ),
                     // maxLines: 2,
                     decoration: _DeviceInofInputDecoration(
                       'Device nick name',
@@ -170,35 +188,53 @@ class DeviceConfig extends StatelessWidget {
                         // FilteringTextInputFormatter.allow(RegExp("[a-zA-Z.,!?]")),
                         FilteringTextInputFormatter.allow(RegExp('[ -~]')),
                       ],
-                      controller:
-                          TextEditingController(text: deviceInfo.accessKey),
-                      onChanged: (value) =>
-                          deviceInfo.accessKey = value.replaceAll('\r\n', '\n'),
+                      controller: TextEditingController(
+                        text: infoEdit.deviceInfo.accessKey,
+                      ),
+                      onChanged: (value) => infoEdit.deviceInfo.accessKey =
+                          value.replaceAll('\r\n', '\n'),
                       style: const TextStyle(
-                          fontSize: 20, fontFamily: subFontFamily),
+                        fontSize: 20,
+                        fontFamily: subFontFamily,
+                      ),
                       maxLength: SimpleCtrlHandle.accessKeyLength,
                       // maxLines: 2,
                       keyboardType: TextInputType.multiline,
                       decoration: _DeviceInofInputDecoration(
-                          'Access key',
-                          'Set access key for your device',
-                          IconButton(
-                              onPressed: () {
-                                final Random random = Random();
-                                final int start = ' '.codeUnits[0];
-                                final int stop = '~'.codeUnits[0];
-                                final String result = String.fromCharCodes(
-                                    List.generate(
-                                        SimpleCtrlHandle.accessKeyLength,
-                                        (index) =>
-                                            random.nextInt(stop - start + 1) +
-                                            start));
-                                setState(() {
-                                  deviceInfo.accessKey = result;
-                                });
-                              },
-                              icon: const Icon(Icons.refresh))),
+                        'Access key',
+                        'Set access key for your device',
+                        IconButton(
+                          onPressed: () {
+                            final Random random = Random();
+                            final int start = ' '.codeUnits[0];
+                            final int stop = '~'.codeUnits[0];
+                            final String result = String.fromCharCodes(
+                              List.generate(
+                                SimpleCtrlHandle.accessKeyLength,
+                                (index) =>
+                                    random.nextInt(stop - start + 1) + start,
+                              ),
+                            );
+                            setState(() {
+                              infoEdit.deviceInfo.accessKey = result;
+                            });
+                          },
+                          icon: const Icon(Icons.refresh),
+                        ),
+                      ),
                     ),
+                  ),
+                ),
+                Visibility(
+                  visible: infoEdit.ctrlReady,
+                  child: CheckboxListTile(
+                    title: const Text('Sync name to remote'),
+                    // subtitle: const Text('subtitle'),
+                    value: infoEdit.syncName,
+                    onChanged: (bool? value) =>
+                        setState(() => infoEdit.syncName = value!),
+                    secondary: const Icon(Icons.sync_rounded),
+                    controlAffinity: ListTileControlAffinity.leading,
                   ),
                 ),
                 child,
@@ -209,11 +245,15 @@ class DeviceConfig extends StatelessWidget {
                       minimumSize: const Size(double.infinity, 50),
                     ),
                     onPressed: () {
-                      developer.log('Nick name: ${deviceInfo.nickName}',
-                          name: _logName);
-                      developer.log('Access key: ${deviceInfo.accessKey}',
-                          name: _logName);
-                      onSavePressed(deviceInfo);
+                      developer.log(
+                        'Nick name: ${infoEdit.deviceInfo.nickName}',
+                        name: _logName,
+                      );
+                      developer.log(
+                        'Access key: ${infoEdit.deviceInfo.accessKey}',
+                        name: _logName,
+                      );
+                      onSavePressed(infoEdit);
                     },
                     child: const Text(
                       "Save",
