@@ -45,6 +45,8 @@ class SensorDeviceCtrlPageState extends ParameterStatefulState {
   static const int _sensorTypeBrightness = 0x01;
   static const int _sensorTypeHumidity = 0x02;
   static const int _sensorTypeTemperature = 0x03;
+  static const int _sensorTypeTVOC = 0x04;
+  static const int _sensorTypeCO2eq = 0x05;
 
   final Map<String, _SensorInfo> _sensorKeyMap = {};
 
@@ -82,11 +84,17 @@ class SensorDeviceCtrlPageState extends ParameterStatefulState {
               case _sensorTypeTemperature:
                 icon = Icons.device_thermostat;
                 break;
+              case _sensorTypeTVOC:
+                icon = Icons.eco_outlined;
+                break;
+              case _sensorTypeCO2eq:
+                icon = Icons.co2;
+                break;
               default:
                 icon = Icons.device_unknown;
             }
             _sensorKeyMap[key] = _SensorInfo(
-              '$sensorName$sensorIndex',
+              '${sensorName}_$sensorIndex',
               null,
               icon,
             );
@@ -129,6 +137,18 @@ class SensorDeviceCtrlPageState extends ParameterStatefulState {
             int sensorData = byteData.getUint16(0, Endian.little);
             tmp = '${sensorData / 10}℃';
             break;
+          case _sensorTypeTVOC:
+            ByteData byteData = playload.buffer.asByteData();
+            int sensorData = byteData.getUint16(0, Endian.little);
+            tmp = '${sensorData}ppb';
+            break;
+          case _sensorTypeCO2eq:
+            ByteData byteData = playload.buffer.asByteData();
+            int sensorData = byteData.getUint16(0, Endian.little);
+            tmp = '${sensorData}ppm';
+            break;
+          default:
+            tmp = 'Unsupported';
         }
 
         if (!mounted) return;
@@ -260,7 +280,7 @@ class SensorDeviceCtrlPageState extends ParameterStatefulState {
                         color: hasData ? Colors.cyan : Colors.grey,
                       ),
                     ),
-                    // Key name
+                    // Sensor name
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
