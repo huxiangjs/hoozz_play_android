@@ -277,14 +277,21 @@ class _SimpleCtrlHandlePack {
 
 class SimpleCtrlDataNotifier extends ChangeNotifier {
   final Queue<Uint8List> _dataQueue = Queue<Uint8List>();
-  final Queue<Completer> _completerQueue = Queue<Completer>();
+  final Queue<Completer<Uint8List>> _completerQueue =
+      Queue<Completer<Uint8List>>();
 
   void addData(Uint8List data) {
-    // Add data
-    _dataQueue.add(data);
-    notifyListeners();
-    // Set complete
-    if (_completerQueue.isNotEmpty) _completerQueue.removeFirst().complete();
+    if (_completerQueue.isNotEmpty) {
+      // A pending request owns this response (the device answers in
+      // request order, so the FIFO matching stays in sync); complete it
+      // directly with the data
+      _completerQueue.removeFirst().complete(data);
+    } else {
+      // No pending request: keep the data for the listeners (e.g. the
+      // notify type)
+      _dataQueue.add(data);
+      notifyListeners();
+    }
   }
 
   Uint8List getData() {
@@ -297,14 +304,17 @@ class SimpleCtrlDataNotifier extends ChangeNotifier {
     Function? then,
   ]) async {
     Uint8List? retVal;
-    Completer completer = Completer();
+    Completer<Uint8List> completer = Completer<Uint8List>();
     _completerQueue.add(completer);
     if (ready != null) ready();
     try {
-      await completer.future.timeout(Duration(seconds: timeout));
-      retVal = getData();
+      retVal = await completer.future.timeout(Duration(seconds: timeout));
       if (then != null) then(retVal);
     } catch (e) {
+      // Timed out: drop the stale completer so a late response cannot
+      // be handed to a later request (which would desynchronize the
+      // request/response matching)
+      _completerQueue.remove(completer);
       retVal = null;
     }
     return retVal;
