@@ -319,6 +319,17 @@ class SimpleCtrlDataNotifier extends ChangeNotifier {
     }
     return retVal;
   }
+
+  ///
+  /// Discard the pending requests and the queued data. Called when the
+  /// handle is destroyed so a re-initialized handle starts with a clean
+  /// queue (a late response of the old session must not be matched to a
+  /// request of the next one).
+  ///
+  void reset() {
+    _completerQueue.clear();
+    _dataQueue.clear();
+  }
 }
 
 class SimpleCtrlHandle {
@@ -336,6 +347,9 @@ class SimpleCtrlHandle {
   static const int _ctrlInfoTypeSetName = 0x01;
   static const int _ctrlInfoTypeGetClassId = 0x02;
   static const int _ctrlInfoTypeSetPasswd = 0x03;
+  static const int _ctrlInfoTypeFwVersion = 0x04;
+  static const int _ctrlInfoTypeFwUpgrade = 0x05;
+  static const int _ctrlInfoTypeFwProgress = 0x06;
 
   final int _ctrlReturnOk = 0x00;
   final int _ctrlReturnFail = 0x01;
@@ -360,6 +374,29 @@ class SimpleCtrlHandle {
   late int _cryptoType;
 
   final ValueNotifier<int> stateNotifier = ValueNotifier<int>(stateInit);
+
+  ///
+  /// Set when the user deliberately cancels an operation (e.g. an OTA
+  /// transfer) that makes the device drop the control connection as a
+  /// side effect. The next destroy is consumed by [maybeReconnect] so
+  /// the page reconnects in place instead of being popped off the stack.
+  ///
+  bool _expectDisconnect = false;
+
+  ///
+  /// A [maybeReconnect] is in progress; the page's state listener must
+  /// not handle the destroys in between (the final outcome is reported
+  /// by [maybeReconnect]).
+  ///
+  bool _reconnecting = false;
+
+  ///
+  /// Incremented for every successful session. A stale ping callback of
+  /// a previous session (its pending request was dropped by
+  /// [destroyHandle]) must not tear down the current session when it
+  /// times out.
+  ///
+  int _generation = 0;
 
   Socket? _tcpSocket;
 
@@ -612,6 +649,91 @@ class SimpleCtrlHandle {
     return true;
   }
 
+  ///
+  /// Query the device's firmware version (the git hash the image was
+  /// built from, possibly with a "-dirty" suffix).
+  ///
+  /// Returns the version string, or null when the device does not support
+  /// OTA (old firmware, the command is rejected) or the request fails.
+  ///
+  Future<String?> fwVersion() async {
+    Uint8List setData =
+        _buildTypeInfoPackData(_ctrlInfoTypeFwVersion, Uint8List(0));
+    String? version;
+    bool ok = false;
+    await _dataNotifier[_ctrlLoadTypeInfo]
+        .waitData(5, () => _write(setData))
+        .then((Uint8List? value) {
+      if (value != null &&
+          value.length >= 2 &&
+          value[0] == _ctrlInfoTypeFwVersion &&
+          value[1] == _ctrlReturnOk) {
+        version = utf8.decode(value.sublist(2), allowMalformed: true);
+        ok = true;
+      }
+    });
+    if (!ok) {
+      developer.log('Get fw version failed', name: _logName);
+      return null;
+    }
+    final String trimmed = version!.trim();
+    return trimmed.isEmpty ? null : trimmed;
+  }
+
+  ///
+  /// Ask the device to start an OTA transfer from [url]
+  /// ("hoozz://<key>/<port>").
+  ///
+  /// Returns true when the device accepted the request, false when it
+  /// refused (it is busy - typically the 30 s accept window of a
+  /// previously interrupted OTA) or the request failed.
+  ///
+  Future<bool> fwUpgrade(String url) async {
+    Uint8List setData =
+        _buildTypeInfoPackData(_ctrlInfoTypeFwUpgrade, utf8.encode(url));
+    bool ok = false;
+    await _dataNotifier[_ctrlLoadTypeInfo]
+        .waitData(5, () => _write(setData))
+        .then((Uint8List? value) {
+      if (value != null &&
+          value.length == 2 &&
+          value[0] == _ctrlInfoTypeFwUpgrade &&
+          value[1] == _ctrlReturnOk) {
+        ok = true;
+      }
+    });
+    developer.log('Fw upgrade ${ok ? 'accepted' : 'refused'}', name: _logName);
+    return ok;
+  }
+
+  ///
+  /// Query the OTA transfer progress (0-100).
+  ///
+  /// Returns the progress, or -1 when the device does not support OTA,
+  /// the request times out, or the control channel is gone.
+  ///
+  Future<int> fwProgress() async {
+    Uint8List setData =
+        _buildTypeInfoPackData(_ctrlInfoTypeFwProgress, Uint8List(0));
+    int progress = -1;
+    try {
+      await _dataNotifier[_ctrlLoadTypeInfo]
+          .waitData(5, () => _write(setData))
+          .then((Uint8List? value) {
+        if (value != null &&
+            value.length >= 3 &&
+            value[0] == _ctrlInfoTypeFwProgress &&
+            value[1] == _ctrlReturnOk) {
+          progress = value[2];
+        }
+      });
+    } catch (e) {
+      // The control channel is gone (e.g. the device is rebooting)
+      progress = -1;
+    }
+    return progress;
+  }
+
   Future<Uint8List?> request(Uint8List data, bool existReturn) async {
     Uint8List? retVal;
     Uint8List packData = _buildRequestPackData(data);
@@ -662,14 +784,21 @@ class SimpleCtrlHandle {
     }
 
     final Uint8List pingData = _buildPingPackData();
+    // Each successful session gets a generation; a stale ping callback of
+    // a previous session (its pending request was dropped by
+    // destroyHandle's queue reset) must not tear down this session when
+    // it times out
+    final int generation = ++_generation;
     // ping remote
     _pingTimer = Timer.periodic(Duration(seconds: _pingInterval), (
       Timer timer,
     ) {
+      if (generation != _generation) return;
       // developer.log('Ping start', name: _logName);
       _dataNotifier[_ctrlLoadTypePing]
           .waitData(10, () => _write(pingData))
           .then((Uint8List? value) {
+            if (generation != _generation) return;
             if (value != null &&
                 value.length == 1 &&
                 value[0] == _ctrlReturnOk) {
@@ -692,12 +821,80 @@ class SimpleCtrlHandle {
       name: _logName,
     );
     try {
-      _pingTimer!.cancel();
+      // Both fields may be null (a failed initHandle also calls this)
+      _pingTimer?.cancel();
       _pingTimer = null;
-      _tcpSocket!.close();
+      _tcpSocket?.close();
       _tcpSocket = null;
     } catch (e) {
       developer.log('Close socket exception', name: _logName);
+    }
+    // Drop the parse state and the pending request/response queues so a
+    // re-initialized session starts clean (a late packet of the old
+    // session must not be matched to a request of the next one)
+    _currentParsePack = null;
+    _dataQueue.clear();
+    for (final SimpleCtrlDataNotifier notifier in _dataNotifier) {
+      notifier.reset();
+    }
+  }
+
+  ///
+  /// Mark the next destroy as expected (the user deliberately cancelled an
+  /// operation that makes the device drop the control connection as a side
+  /// effect). The page's state listener then reconnects the same handle in
+  /// place instead of leaving the page.
+  ///
+  void expectDisconnect() {
+    _expectDisconnect = true;
+  }
+
+  ///
+  /// A [maybeReconnect] is in progress.
+  ///
+  bool get reconnecting => _reconnecting;
+
+  ///
+  /// Abort a pending [maybeReconnect] (the page is being disposed, so no
+  /// further destroy should be turned into a reconnect).
+  ///
+  void cancelReconnect() {
+    _reconnecting = false;
+    _expectDisconnect = false;
+  }
+
+  ///
+  /// Reconnect this same handle in place: a fresh socket, the state goes
+  /// back to connected, and every existing reference to the handle stays
+  /// valid. Retried a few times because the device's accept loop is briefly
+  /// busy right after an interrupted OTA transfer. Returns true when the
+  /// reconnect succeeded.
+  ///
+  Future<bool> maybeReconnect() async {
+    // Consume the mark synchronously so the destroy that triggered this
+    // (and any racing one) is not treated as expected twice
+    final bool expected = _expectDisconnect;
+    _expectDisconnect = false;
+    if (!expected) return false;
+    _reconnecting = true;
+    try {
+      for (int attempt = 0; attempt < 3; attempt++) {
+        if (!_reconnecting) return false; // The page gave up
+        final bool ok = await initHandle();
+        if (!_reconnecting) {
+          // The page was disposed while initHandle was in flight (on a
+          // reconnect there is no modal dialog blocking navigation away);
+          // tear down the session it just created (orphaned socket + ping
+          // timer)
+          destroyHandle();
+          return false;
+        }
+        if (ok) return true;
+        await Future<void>.delayed(const Duration(seconds: 1));
+      }
+      return false;
+    } finally {
+      _reconnecting = false;
     }
   }
 }
