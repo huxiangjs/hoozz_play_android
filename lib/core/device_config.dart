@@ -9,11 +9,135 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:hoozz_play/core/device_binding.dart';
 import 'package:hoozz_play/core/device_storage.dart';
+import 'package:hoozz_play/core/firmware_version_row.dart';
 import 'package:hoozz_play/core/simple_ctrl.dart';
 import 'package:hoozz_play/themes/theme.dart';
 import 'dart:developer' as developer;
 
 const String _logName = 'Device Configure';
+
+//
+// An info row of the configure page (the table in _InfoTable). The label
+// is right-aligned; the table's IntrinsicColumnWidth sizes the label
+// column to the widest label of the rows that are present (no fixed
+// width), and the value column takes the remaining space and wraps on
+// narrow screens.
+//
+TableRow _infoRow(String label, Widget value,
+    {EdgeInsets padding = const EdgeInsets.fromLTRB(10, 2, 10, 2)}) {
+  return TableRow(
+    children: [
+      Padding(
+        padding: padding,
+        child: Text(
+          label,
+          textAlign: TextAlign.right,
+          style: const TextStyle(fontSize: 18),
+        ),
+      ),
+      Padding(
+        padding: padding,
+        child: value,
+      ),
+    ],
+  );
+}
+
+//
+// The info table of the configure page (name/class/id/ip/version). It
+// fetches the firmware version from the device asynchronously; the version
+// row is only present when a version could be fetched (old firmware
+// without OTA support does not answer the command), so the
+// IntrinsicColumnWidth label column adapts to the rows that are actually
+// shown.
+//
+class _InfoTable extends StatefulWidget {
+  final DiscoverDeviceInfo device;
+  final SimpleCtrlHandle? ctrl;
+
+  const _InfoTable({required this.device, this.ctrl});
+
+  @override
+  State<_InfoTable> createState() => _InfoTableState();
+}
+
+class _InfoTableState extends State<_InfoTable> {
+  // The firmware version fetched from the device (null until fetched, or
+  // when it could not be fetched - the version row is hidden then)
+  String? _version;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadVersion();
+  }
+
+  Future<void> _loadVersion() async {
+    if (widget.ctrl == null) return;
+    String? version;
+    try {
+      version = await widget.ctrl!.fwVersion();
+    } catch (e) {
+      developer.log('Get fw version failed: $e', name: _logName);
+    }
+    if (!mounted || version == null || version.isEmpty) return;
+    setState(() => _version = version);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Table(
+      columnWidths: const {
+        0: IntrinsicColumnWidth(),
+        1: FlexColumnWidth(1.0),
+      },
+      children: [
+        _infoRow(
+          'NAME:',
+          Text(
+            widget.device.name,
+            style: const TextStyle(fontSize: 18, fontFamily: subFontFamily),
+          ),
+          padding: const EdgeInsets.fromLTRB(10, 24, 10, 2),
+        ),
+        _infoRow(
+          'CLASS:',
+          Text(
+            DeviceBindingList.binding[widget.device.classId] == null
+                ? 'Unknown'
+                : DeviceBindingList.binding[widget.device.classId]!.describe,
+            style: const TextStyle(fontSize: 18, fontFamily: subFontFamily),
+          ),
+        ),
+        _infoRow(
+          'ID:',
+          Text(
+            widget.device.id,
+            style: const TextStyle(fontSize: 18, fontFamily: subFontFamily),
+          ),
+        ),
+        _infoRow(
+          'IP:',
+          Text(
+            '${widget.device.ip} : ${widget.device.port}',
+            style: const TextStyle(fontSize: 18, fontFamily: subFontFamily),
+          ),
+        ),
+        // The firmware version row (offers the OTA update); hidden until
+        // the version could be fetched from the device
+        if (_version != null)
+          _infoRow(
+            'VERSION:',
+            FirmwareVersionRow(
+              device: widget.device,
+              ctrl: widget.ctrl!,
+              version: _version!,
+            ),
+          ),
+      ],
+    );
+  }
+}
 
 class _DeviceInofInputDecoration extends InputDecoration {
   static final OutlineInputBorder disabledOutlineInputBorder =
@@ -64,6 +188,11 @@ class DeviceConfig extends StatelessWidget {
   final Widget child;
   final Function(InfoEdit infoEdit) onSavePressed;
 
+  // The control handle used to query the firmware version (the version
+  // row is shown only when a version could be fetched; null for device
+  // types without an esp8266 firmware update)
+  final SimpleCtrlHandle? ctrlHandle;
+
   const DeviceConfig({
     super.key,
     required this.allowSetPasswd,
@@ -71,6 +200,7 @@ class DeviceConfig extends StatelessWidget {
     required this.infoEdit,
     this.child = const Text(''),
     required this.onSavePressed,
+    this.ctrlHandle,
   });
 
   @override
@@ -85,79 +215,15 @@ class DeviceConfig extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.start,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(10, 24, 10, 2),
-                  child: Row(
-                    children: [
-                      const Text(' NAME: ', style: TextStyle(fontSize: 18)),
-                      Expanded(
-                        child: Text(
-                          discoverDeviceInfo.name,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontFamily: subFontFamily,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(10, 2, 10, 2),
-                  child: Row(
-                    children: [
-                      const Text('CLASS: ', style: TextStyle(fontSize: 18)),
-                      Expanded(
-                        child: Text(
-                          DeviceBindingList.binding[discoverDeviceInfo
-                                      .classId] ==
-                                  null
-                              ? 'Unknown'
-                              : DeviceBindingList
-                                    .binding[discoverDeviceInfo.classId]!
-                                    .describe,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontFamily: subFontFamily,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(10, 2, 10, 2),
-                  child: Row(
-                    children: [
-                      const Text('    ID: ', style: TextStyle(fontSize: 18)),
-                      Expanded(
-                        child: Text(
-                          discoverDeviceInfo.id,
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontFamily: subFontFamily,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(10, 2, 10, 2),
-                  child: Row(
-                    children: [
-                      const Text('    IP: ', style: TextStyle(fontSize: 18)),
-                      Expanded(
-                        child: Text(
-                          '${discoverDeviceInfo.ip} : ${discoverDeviceInfo.port}',
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontFamily: subFontFamily,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+                // The info rows (name/class/id/ip/version) as a table: the
+                // right-aligned label column is sized to the widest label
+                // of the rows that are present (IntrinsicColumnWidth - it
+                // adapts when the version row is hidden), and the value
+                // column takes the remaining space and wraps on narrow
+                // screens
+                _InfoTable(
+                  device: discoverDeviceInfo,
+                  ctrl: ctrlHandle,
                 ),
                 const Divider(),
                 Padding(

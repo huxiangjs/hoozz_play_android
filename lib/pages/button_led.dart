@@ -49,6 +49,13 @@ class ButtonLEDDeviceCtrlPageState extends ParameterStatefulState {
 
   bool _isFirstRender = true;
 
+  //
+  // The "Device connecting..." dialog is up (its dismissal pops that
+  // dialog, not the page; on a reconnect it is not shown, so the pop must
+  // be skipped).
+  //
+  bool _connectingDialog = false;
+
   late DelayedCall<Uint8List> _delayedCall;
 
   late GradientListCall<double> _gradientListCall;
@@ -127,7 +134,12 @@ class ButtonLEDDeviceCtrlPageState extends ParameterStatefulState {
       Uint8List data = byteData.buffer.asUint8List();
       _simpleCtrlHandle.request(data, true).then((Uint8List? value) {
         developer.log('Get color return: $value', name: _logName);
-        Navigator.pop(context);
+        // Dismiss the "Device connecting..." dialog only if it is up (on a
+        // reconnect it is not shown and the pop would remove the page)
+        if (_connectingDialog) {
+          _connectingDialog = false;
+          if (mounted) Navigator.pop(context);
+        }
         if (value != null &&
             value.length == 5 &&
             value[0] == _ledCmdGetColor &&
@@ -164,11 +176,19 @@ class ButtonLEDDeviceCtrlPageState extends ParameterStatefulState {
       // Disconnected or Failed
     } else if (_simpleCtrlHandle.stateNotifier.value ==
         SimpleCtrlHandle.stateDestroy) {
-      Navigator.popUntil(
-        context,
-        (route) => route.settings.name == '/button_led',
-      );
-      SimpleSnackBar.show(context, 'Device connection failed', Colors.red);
+      // A deliberate cancellation (e.g. of an OTA transfer) makes the
+      // device drop this connection; reconnect the same handle in place
+      // and stay on the page
+      if (_simpleCtrlHandle.reconnecting) return;
+      _simpleCtrlHandle.maybeReconnect().then((bool ok) {
+        if (!ok && mounted) {
+          Navigator.popUntil(
+            context,
+            (route) => route.settings.name == '/button_led',
+          );
+          SimpleSnackBar.show(context, 'Device connection failed', Colors.red);
+        }
+      });
     }
   }
 
@@ -187,6 +207,9 @@ class ButtonLEDDeviceCtrlPageState extends ParameterStatefulState {
   @override
   void dispose() {
     _simpleCtrlHandle.stateNotifier.removeListener(_stateNotifier);
+    // Abort a pending reconnect (avoids an orphaned socket and ping timer
+    // when the page is left while one is in flight)
+    _simpleCtrlHandle.cancelReconnect();
     _simpleCtrlHandle.destroyHandle();
     super.dispose();
   }
@@ -211,7 +234,18 @@ class ButtonLEDDeviceCtrlPageState extends ParameterStatefulState {
     if (_isFirstRender) {
       _isFirstRender = false;
       WidgetsBinding.instance.addPostFrameCallback(
-        (_) => SimpleShowDialog.show(context, 'Device connecting...'),
+        (_) {
+          // A very fast connection may be up before this runs; showing the
+          // dialog then would leave it undismissed (the first response that
+          // would pop it is already gone)
+          if (!mounted ||
+              _simpleCtrlHandle.stateNotifier.value ==
+                  SimpleCtrlHandle.stateConnected) {
+            return;
+          }
+          _connectingDialog = true;
+          SimpleShowDialog.show(context, 'Device connecting...');
+        },
       );
     }
 

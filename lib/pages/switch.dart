@@ -78,6 +78,13 @@ class SwitchDeviceCtrlPageState extends ParameterStatefulState {
 
   bool _isFirstRender = true;
 
+  //
+  // The "Device connecting..." dialog is up (its dismissal pops that
+  // dialog, not the page; on a reconnect it is not shown, so the pop must
+  // be skipped).
+  //
+  bool _connectingDialog = false;
+
   // Query the hardware version
   Future<void> _queryVersion() async {
     ByteData byteData = ByteData(1);
@@ -194,9 +201,12 @@ class SwitchDeviceCtrlPageState extends ParameterStatefulState {
   Future<void> _startupQuery() async {
     await _queryVersion();
     if (!mounted) return;
-    // Dismiss the "Device connecting..." dialog (the first request has
-    // completed, the same way the sensor page does)
-    Navigator.pop(context);
+    // Dismiss the "Device connecting..." dialog only if it is up (on a
+    // reconnect it is not shown and the pop would remove the page)
+    if (_connectingDialog) {
+      _connectingDialog = false;
+      Navigator.pop(context);
+    }
     setState(() {});
     await _queryState();
     if (!mounted) return;
@@ -225,8 +235,16 @@ class SwitchDeviceCtrlPageState extends ParameterStatefulState {
       _startupQuery();
     } else if (_simpleCtrlHandle.stateNotifier.value ==
         SimpleCtrlHandle.stateDestroy) {
-      Navigator.popUntil(context, (route) => route.settings.name == '/switch');
-      SimpleSnackBar.show(context, 'Device connection failed', Colors.red);
+      // A deliberate cancellation (e.g. of an OTA transfer) makes the
+      // device drop this connection; reconnect the same handle in place
+      // and stay on the page
+      if (_simpleCtrlHandle.reconnecting) return;
+      _simpleCtrlHandle.maybeReconnect().then((bool ok) {
+        if (!ok && mounted) {
+          Navigator.popUntil(context, (route) => route.settings.name == '/switch');
+          SimpleSnackBar.show(context, 'Device connection failed', Colors.red);
+        }
+      });
     }
   }
 
@@ -245,6 +263,9 @@ class SwitchDeviceCtrlPageState extends ParameterStatefulState {
   @override
   void dispose() {
     _simpleCtrlHandle.stateNotifier.removeListener(_stateNotifier);
+    // Abort a pending reconnect (avoids an orphaned socket and ping timer
+    // when the page is left while one is in flight)
+    _simpleCtrlHandle.cancelReconnect();
     _simpleCtrlHandle.destroyHandle();
     super.dispose();
   }
@@ -512,7 +533,18 @@ class SwitchDeviceCtrlPageState extends ParameterStatefulState {
     if (_isFirstRender) {
       _isFirstRender = false;
       WidgetsBinding.instance.addPostFrameCallback(
-        (_) => SimpleShowDialog.show(context, 'Device connecting...'),
+        (_) {
+          // A very fast connection may be up before this runs; showing the
+          // dialog then would leave it undismissed (the first response that
+          // would pop it is already gone)
+          if (!mounted ||
+              _simpleCtrlHandle.stateNotifier.value ==
+                  SimpleCtrlHandle.stateConnected) {
+            return;
+          }
+          _connectingDialog = true;
+          SimpleShowDialog.show(context, 'Device connecting...');
+        },
       );
     }
 
@@ -642,6 +674,7 @@ class SwitchConfigDevicePageState extends ParameterStatefulState {
       allowSetPasswd: _allowSetPasswd,
       discoverDeviceInfo: _discoverDeviceInfo,
       infoEdit: _infoEdit,
+      ctrlHandle: _simpleCtrlHandle,
       onSavePressed: (infoEdit) {
         if (infoEdit.ctrlReady) {
           SimpleShowDialog.show(context, "Verifying device...");
