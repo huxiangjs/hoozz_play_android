@@ -74,6 +74,11 @@ class FirmwareVersionRow extends StatefulWidget {
 class _FirmwareVersionRowState extends State<FirmwareVersionRow> {
   LatestRelease? _release;
   bool _updateAvailable = false;
+  // Whether the "is there a new release" check against GitHub is in flight
+  // (the version cell shows a small spinner while it runs), and whether
+  // the last check failed (the cell then offers a tap-to-retry icon)
+  bool _checking = false;
+  bool _checkFailed = false;
   bool _busy = false;
   Timer? _countdownTimer;
 
@@ -95,9 +100,14 @@ class _FirmwareVersionRowState extends State<FirmwareVersionRow> {
     // an update is available (blue value + red dot, the same convention as
     // the clickable links in the about page); otherwise it is plain
     // information. The red dot sits right after the version (a short 7
-    // char git sha)
+    // char git sha). While the release info is being fetched from GitHub
+    // a small spinner is shown (the fetch can take a while, or fail on an
+    // unstable network); a failed check shows a small refresh icon that
+    // re-runs the check on tap.
     return InkWell(
-      onTap: _updateAvailable ? _onTap : null,
+      onTap: _updateAvailable
+          ? _onTap
+          : (_checkFailed && !_checking ? _onRetryCheck : null),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -109,7 +119,21 @@ class _FirmwareVersionRowState extends State<FirmwareVersionRow> {
               color: _updateAvailable ? Colors.blue : null,
             ),
           ),
-          if (_updateAvailable)
+          if (_checking)
+            const Padding(
+              padding: EdgeInsets.only(left: 8),
+              child: SizedBox(
+                width: 14,
+                height: 14,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            )
+          else if (_checkFailed)
+            const Padding(
+              padding: EdgeInsets.only(left: 6),
+              child: Icon(Icons.refresh, size: 14, color: subTextColor),
+            )
+          else if (_updateAvailable)
             const Padding(
               padding: EdgeInsets.only(left: 4),
               child: _RedDot(),
@@ -122,14 +146,24 @@ class _FirmwareVersionRowState extends State<FirmwareVersionRow> {
   Future<void> _checkUpdate(String version) async {
     final (String, String)? entry = _firmwareRepos[widget.device.classId];
     if (entry == null) return;
-    try {
-      final LatestRelease? release = await fetchLatestRelease(entry.$1, entry.$2);
-      if (!mounted) return;
-      if (release == null) return;
+    if (mounted) {
       setState(() {
-        _release = release;
-        _updateAvailable = !_isSameFirmware(version, release.commitHash);
+        _checking = true;
+        _checkFailed = false;
       });
+    }
+    try {
+      final LatestRelease? release =
+          await fetchLatestRelease(entry.$1, entry.$2);
+      if (!mounted) return;
+      setState(() {
+        _checking = false;
+        if (release != null) {
+          _release = release;
+          _updateAvailable = !_isSameFirmware(version, release.commitHash);
+        }
+      });
+      if (release == null) return;
       developer.log(
         'Firmware update available: $_updateAvailable '
         '(device: $version, release: ${release.commitHash})',
@@ -137,7 +171,22 @@ class _FirmwareVersionRowState extends State<FirmwareVersionRow> {
       );
     } catch (e) {
       developer.log('Check for update failed: $e', name: _logName);
+      if (mounted) {
+        setState(() {
+          _checking = false;
+          _checkFailed = true;
+        });
+      }
     }
+  }
+
+  ///
+  /// Re-run the update check after it failed (the GitHub API can be
+  /// flaky and is rate-limited when unauthenticated).
+  ///
+  void _onRetryCheck() {
+    if (_busy || _checking) return;
+    _checkUpdate(widget.version);
   }
 
   static bool _isSameFirmware(String deviceVersion, String releaseCommit) {
@@ -169,7 +218,10 @@ class _FirmwareVersionRowState extends State<FirmwareVersionRow> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Update available'),
+          title: const Text(
+            'Update available',
+            style: TextStyle(fontFamily: subFontFamily),
+          ),
           content: SizedBox(
             width: double.maxFinite,
             child: SingleChildScrollView(
@@ -184,23 +236,35 @@ class _FirmwareVersionRowState extends State<FirmwareVersionRow> {
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
+                      fontFamily: subFontFamily,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     'Published: ${_formatPublishTime(release.publishedAt)}',
-                    style: const TextStyle(fontSize: 14, color: Colors.grey),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey,
+                      fontFamily: subFontFamily,
+                    ),
                   ),
                   const Divider(),
                   Text(
                     release.message,
-                    style: const TextStyle(fontSize: 15),
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontFamily: subFontFamily,
+                    ),
                   ),
                   const SizedBox(height: 10),
                   if (zipAsset != null)
                     Text(
                       'Download: ${zipAsset.name} (${_formatSize(zipAsset.size)})',
-                      style: const TextStyle(fontSize: 13, color: Colors.grey),
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey,
+                        fontFamily: subFontFamily,
+                      ),
                     ),
                 ],
               ),
@@ -209,14 +273,20 @@ class _FirmwareVersionRowState extends State<FirmwareVersionRow> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(fontFamily: subFontFamily),
+              ),
             ),
             ElevatedButton(
               onPressed: () {
                 Navigator.of(context).pop();
                 _upgrade(release);
               },
-              child: const Text('Upgrade'),
+              child: const Text(
+                'Upgrade',
+                style: TextStyle(fontFamily: subFontFamily),
+              ),
             ),
           ],
         );
