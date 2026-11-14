@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- The app-specific external download directory
+         (getExternalFilesDir()/github_downloads), the default location -->
+    <external-files-path name="ext_github_downloads" path="github_downloads/" />
+    <!-- Fallback location when external storage is unavailable
+         (getFilesDir()/github_downloads) -->
+    <files-path name="int_github_downloads" path="github_downloads/" />
+</paths>

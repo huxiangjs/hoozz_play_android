@@ -19,8 +19,19 @@ import "pages/tools_esptouch.dart";
 import "pages/device_list.dart";
 import "pages/tools_discover.dart";
 import 'core/device_binding.dart';
+import 'core/github/github_download.dart';
 
 void main() {
+  // Initialize the binding so platform channels (the download directory)
+  // can be used before the app is built
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Remove files left over from previous GitHub downloads (e.g. the APK
+  // downloaded for the last app update) so they don't accumulate.
+  // Deliberately not awaited: runs in the background and must not delay
+  // the app startup (all errors are handled inside)
+  GitHubDownload.cleanDownloadDir();
+
   runApp(const HoozzPlayApp());
 }
 

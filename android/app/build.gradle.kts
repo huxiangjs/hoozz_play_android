@@ -5,6 +5,20 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+/* The short git hash of the commit this build is compiled from,
+ * injected into BuildConfig so the app can check for updates. */
+fun gitCommitHash(): String {
+    return try {
+        val process = ProcessBuilder("git", "rev-parse", "--short=12", "HEAD")
+                .directory(rootDir)
+                .start()
+        val output = process.inputStream.bufferedReader().readText().trim()
+        if (process.waitFor() == 0 && output.isNotEmpty()) output else "unknown"
+    } catch (e: Exception) {
+        "unknown"
+    }
+}
+
 android {
     namespace = "com.example.hoozz_play"
     compileSdk = flutter.compileSdkVersion
@@ -18,6 +32,10 @@ android {
 
     kotlinOptions {
         jvmTarget = JavaVersion.VERSION_11.toString()
+    }
+
+    buildFeatures {
+        buildConfig = true
     }
 
     sourceSets {
@@ -42,6 +60,7 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        buildConfigField("String", "GIT_COMMIT_HASH", "\"${gitCommitHash()}\"")
     }
 
     buildTypes {
@@ -67,6 +86,9 @@ flutter {
 
 dependencies {
     implementation("com.github.felHR85:UsbSerial:6.1.0")
+
+    // FileProvider (share the downloaded APK with the package installer)
+    implementation("androidx.core:core:1.13.1")
 
     // esp touch smart config
     implementation(project(":esptouch"))

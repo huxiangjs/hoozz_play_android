@@ -23,6 +23,7 @@ import io.flutter.plugin.common.MethodChannel.Result;
 
 import com.example.hoozz_play.adapter.MLX90640Adapter;
 import com.example.hoozz_play.adapter.ESPTouchAdapter;
+import com.example.hoozz_play.adapter.UpdateAdapter;
 
 public class MainActivity extends FlutterActivity {
     private final String TAG = MainActivity.class.getSimpleName();
@@ -66,6 +67,9 @@ public class MainActivity extends FlutterActivity {
                         result.success(espTouchAdapter.callFunction(call.method, call));
                     }
                 );
+	/* Update */
+	new MethodChannel(flutterEngine.getDartExecutor().getBinaryMessenger(), "UPDATE_METHOD")
+                .setMethodCallHandler(new UpdateAdapter(getBaseContext()));
         Log.d(TAG, "configureFlutterEngine done");
     }
 
