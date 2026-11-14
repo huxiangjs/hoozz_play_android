@@ -15,6 +15,7 @@ import 'package:hoozz_play/core/build_info.dart';
 import 'package:hoozz_play/core/github/github_download.dart';
 import 'package:hoozz_play/core/github/github_release.dart';
 import 'package:hoozz_play/core/simple_snackbar.dart';
+import 'package:hoozz_play/themes/theme.dart';
 
 const String _logName = 'About';
 
@@ -66,6 +67,11 @@ class _HoozzPlayAboutPageState extends State<HoozzPlayAboutPage>
   /* Update state */
   LatestRelease? _latestRelease;
   bool _updateAvailable = false;
+  // Whether the "is there a new version" check against GitHub is in flight
+  // (the version line shows a small spinner while it runs), and whether
+  // the last check failed (the line then offers a tap-to-retry icon)
+  bool _checking = false;
+  bool _checkFailed = false;
   // The already-downloaded APK whose install was blocked by the missing
   // "Install unknown apps" permission; retried when the app comes back
   // to the foreground (e.g. after the settings page was opened)
@@ -132,6 +138,12 @@ class _HoozzPlayAboutPageState extends State<HoozzPlayAboutPage>
   }
 
   Future<void> _checkUpdate(String buildHash) async {
+    if (mounted) {
+      setState(() {
+        _checking = true;
+        _checkFailed = false;
+      });
+    }
     try {
       LatestRelease? release = await fetchLatestRelease(
         _updateRepoOwner,
@@ -140,13 +152,16 @@ class _HoozzPlayAboutPageState extends State<HoozzPlayAboutPage>
       if (!mounted) return;
       if (release == null) {
         developer.log('No release found', name: _logName);
+        setState(() => _checking = false);
         return;
       }
       if (release.apkAsset == null) {
         developer.log('Release ${release.tag} has no apk asset', name: _logName);
+        setState(() => _checking = false);
         return;
       }
       setState(() {
+        _checking = false;
         _latestRelease = release;
         _updateAvailable = !_isSameCommit(buildHash, release.commitHash);
       });
@@ -157,6 +172,12 @@ class _HoozzPlayAboutPageState extends State<HoozzPlayAboutPage>
       );
     } catch (e) {
       developer.log('Check update exception: $e', name: _logName);
+      if (mounted) {
+        setState(() {
+          _checking = false;
+          _checkFailed = true;
+        });
+      }
     }
   }
 
@@ -203,7 +224,10 @@ class _HoozzPlayAboutPageState extends State<HoozzPlayAboutPage>
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Update available'),
+          title: const Text(
+            'Update available',
+            style: TextStyle(fontFamily: subFontFamily),
+          ),
           content: SizedBox(
             width: double.maxFinite,
             child: SingleChildScrollView(
@@ -213,23 +237,38 @@ class _HoozzPlayAboutPageState extends State<HoozzPlayAboutPage>
                 children: [
                   Text(
                     'Version: ${release.tag}',
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      fontFamily: subFontFamily,
+                    ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     'Published: ${_formatPublishTime(release.publishedAt)}',
-                    style: const TextStyle(fontSize: 14, color: Colors.grey),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey,
+                      fontFamily: subFontFamily,
+                    ),
                   ),
                   const Divider(),
                   Text(
                     release.message,
-                    style: const TextStyle(fontSize: 15),
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontFamily: subFontFamily,
+                    ),
                   ),
                   const SizedBox(height: 10),
                   if (asset != null)
                     Text(
                       'Download: ${asset.name} (${_formatSize(asset.size)})',
-                      style: const TextStyle(fontSize: 13, color: Colors.grey),
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey,
+                        fontFamily: subFontFamily,
+                      ),
                     ),
                 ],
               ),
@@ -238,14 +277,20 @@ class _HoozzPlayAboutPageState extends State<HoozzPlayAboutPage>
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(fontFamily: subFontFamily),
+              ),
             ),
             ElevatedButton(
               onPressed: () {
                 Navigator.of(context).pop();
                 _update(release);
               },
-              child: const Text('Update'),
+              child: const Text(
+                'Update',
+                style: TextStyle(fontFamily: subFontFamily),
+              ),
             ),
           ],
         );
@@ -440,9 +485,16 @@ class _HoozzPlayAboutPageState extends State<HoozzPlayAboutPage>
               style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 10),
-            /* Version line: red dot + clickable when an update is available */
+            /* Version line: red dot + clickable when an update is
+               available; a small spinner while the release info is being
+               fetched from GitHub, and a tap-to-retry icon when the check
+               failed */
             InkWell(
-              onTap: _updateAvailable ? () => _showUpdateDialog() : null,
+              onTap: _updateAvailable
+                  ? () => _showUpdateDialog()
+                  : (_checkFailed && !_checking
+                      ? () => _checkUpdate(_gitHash)
+                      : null),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -451,7 +503,21 @@ class _HoozzPlayAboutPageState extends State<HoozzPlayAboutPage>
                     'Version: $_version/$_gitHash',
                     style: const TextStyle(fontSize: 18, color: Colors.grey),
                   ),
-                  if (_updateAvailable)
+                  if (_checking)
+                    const Padding(
+                      padding: EdgeInsets.only(left: 8),
+                      child: SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    )
+                  else if (_checkFailed)
+                    const Padding(
+                      padding: EdgeInsets.only(left: 6),
+                      child: Icon(Icons.refresh, size: 14, color: subTextColor),
+                    )
+                  else if (_updateAvailable)
                     const Padding(
                       padding: EdgeInsets.only(left: 4),
                       child: _RedDot(),
