@@ -206,7 +206,58 @@ class DeviceConfig extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Configure device")),
+      appBar: AppBar(
+        title: const Text("Configure device"),
+        // Restart the device (top right); only for device types with the
+        // esp8266 control channel (ctrlHandle != null)
+        actions: [
+          if (ctrlHandle != null)
+            IconButton(
+              tooltip: 'Restart device',
+              icon: const Icon(Icons.restart_alt),
+              onPressed: () async {
+                final bool? confirmed = await showDialog<bool>(
+                  context: context,
+                  builder: (BuildContext context) => AlertDialog(
+                    title: const Text('Restart device'),
+                    content: const Text(
+                      'The device will restart shortly and may be '
+                      'unreachable for a while. Continue?',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, false),
+                        child: const Text('Cancel'),
+                      ),
+                      TextButton(
+                        onPressed: () => Navigator.pop(context, true),
+                        child: const Text('Restart'),
+                      ),
+                    ],
+                  ),
+                );
+                if (confirmed != true) return;
+                // Captured before the await below (the context of a
+                // Stateless widget must not be used after an async gap)
+                final ScaffoldMessengerState messenger =
+                    ScaffoldMessenger.of(context);
+                bool ok = false;
+                try {
+                  ok = await ctrlHandle!.fwRestart();
+                } catch (e) {
+                  developer.log('Fw restart failed: $e', name: _logName);
+                }
+                messenger.showSnackBar(
+                  SnackBar(
+                    content: Text(ok
+                        ? 'Device is restarting'
+                        : 'Restart request failed'),
+                  ),
+                );
+              },
+            ),
+        ],
+      ),
       body: SingleChildScrollView(
         scrollDirection: Axis.vertical,
         child: StatefulBuilder(

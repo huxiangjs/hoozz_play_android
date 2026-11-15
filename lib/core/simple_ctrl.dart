@@ -350,6 +350,7 @@ class SimpleCtrlHandle {
   static const int _ctrlInfoTypeFwVersion = 0x04;
   static const int _ctrlInfoTypeFwUpgrade = 0x05;
   static const int _ctrlInfoTypeFwProgress = 0x06;
+  static const int _ctrlInfoTypeFwRestart = 0x07;
 
   final int _ctrlReturnOk = 0x00;
   final int _ctrlReturnFail = 0x01;
@@ -703,6 +704,32 @@ class SimpleCtrlHandle {
       }
     });
     developer.log('Fw upgrade ${ok ? 'accepted' : 'refused'}', name: _logName);
+    return ok;
+  }
+
+  ///
+  /// Ask the device to restart (INFO/FW_RESTART).
+  ///
+  /// Returns true when the device accepted the request (it restarts a
+  /// moment later, so the control channel drops right after), false when
+  /// it refused (the firmware does not support the command) or the
+  /// request failed.
+  ///
+  Future<bool> fwRestart() async {
+    Uint8List setData =
+        _buildTypeInfoPackData(_ctrlInfoTypeFwRestart, Uint8List(0));
+    bool ok = false;
+    await _dataNotifier[_ctrlLoadTypeInfo]
+        .waitData(5, () => _write(setData))
+        .then((Uint8List? value) {
+      if (value != null &&
+          value.length == 2 &&
+          value[0] == _ctrlInfoTypeFwRestart &&
+          value[1] == _ctrlReturnOk) {
+        ok = true;
+      }
+    });
+    developer.log('Fw restart ${ok ? 'accepted' : 'refused'}', name: _logName);
     return ok;
   }
 
