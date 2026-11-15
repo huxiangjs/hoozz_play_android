@@ -27,10 +27,11 @@ import 'package:hoozz_play/themes/theme.dart';
 
 const String _logName = 'FirmwareVersionRow';
 
-// The GitHub repositories publishing the esp8266 firmware releases, keyed
-// by device class id. Only the esp8266 devices are listed (the esp32 OTA is
-// not done yet).
+// The GitHub repositories publishing the firmware releases, keyed by
+// device class id.
 const Map<int, (String, String)> _firmwareRepos = {
+  DeviceBindingList.idVoiceLed: ('huxiangjs', 'hoozz_play_esp32c3_voice_led'),
+  DeviceBindingList.idButtonLed: ('huxiangjs', 'hoozz_play_esp32c3_button_led'),
   DeviceBindingList.idSmartIr: ('huxiangjs', 'hoozz_play_esp8266_smart_ir'),
   DeviceBindingList.idSensor: ('huxiangjs', 'hoozz_play_esp8266_sensor'),
   DeviceBindingList.idSwitch: ('huxiangjs', 'hoozz_play_esp8266_switch'),

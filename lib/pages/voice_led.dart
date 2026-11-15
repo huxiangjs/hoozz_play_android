@@ -394,6 +394,7 @@ class VoiceLEDConfigDevicePageState extends ParameterStatefulState {
       allowSetPasswd: _allowSetPasswd,
       discoverDeviceInfo: _discoverDeviceInfo,
       infoEdit: _infoEdit,
+      ctrlHandle: _simpleCtrlHandle,
       onSavePressed: (infoEdit) {
         if (infoEdit.ctrlReady) {
           SimpleShowDialog.show(context, "Verifying device...");
