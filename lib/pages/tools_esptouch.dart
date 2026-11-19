@@ -11,6 +11,7 @@ import 'package:hoozz_play/core/simple_ctrl.dart';
 import 'package:hoozz_play/themes/theme.dart';
 import 'package:hoozz_play/adapter/esptouch_adapter.dart';
 import 'package:hoozz_play/core/parameter_stateful.dart';
+import 'package:hoozz_play/l10n/app_localizations.dart';
 import 'dart:developer' as developer;
 
 const String _logName = 'ESP Touch';
@@ -151,9 +152,9 @@ class _EspTouchPageState extends State<EspTouchPage> {
                         ),
                       ).then((value) {});
                     },
-                    child: const Text(
-                      'Go',
-                      style: TextStyle(color: Colors.green),
+                    child: Text(
+                      AppLocalizations.of(context)!.go,
+                      style: const TextStyle(color: Colors.green),
                     ),
                   ),
                 ),
@@ -244,7 +245,7 @@ class _EspTouchPageState extends State<EspTouchPage> {
           setState(() {
             _configState = false;
           });
-          _generateSnackBar('Unable to start configuration', Colors.red);
+          _generateSnackBar(AppLocalizations.of(context)!.unableStartConfig, Colors.red);
         }
       }
     });
@@ -253,7 +254,7 @@ class _EspTouchPageState extends State<EspTouchPage> {
   void _updateWifiName() {
     ESPTouchAdapter.getWifiName().then((value) {
       if (value == null) {
-        _generateSnackBar('Can\'t get WiFi information', Colors.red);
+        _generateSnackBar(AppLocalizations.of(context)!.cantGetWifi, Colors.red);
       } else {
         if (mounted) {
           setState(() {
@@ -296,6 +297,8 @@ class _EspTouchPageState extends State<EspTouchPage> {
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       appBar: AppBar(title: Text(widget.title)),
       body: SingleChildScrollView(
@@ -317,8 +320,8 @@ class _EspTouchPageState extends State<EspTouchPage> {
                     fontFamily: subFontFamily,
                   ),
                   decoration: _WifiInputDecoration(
-                    'SSID',
-                    'It\'s your Wi-Fi network name (SSID)',
+                    l10n.ssid,
+                    l10n.ssidHint,
                   ),
                 ),
               ),
@@ -333,18 +336,18 @@ class _EspTouchPageState extends State<EspTouchPage> {
                     fontFamily: subFontFamily,
                   ),
                   decoration: _WifiInputDecoration(
-                    'PASSWORD',
-                    'It\'s your Wi-Fi network password',
+                    l10n.password,
+                    l10n.passwordHint,
                   ),
                 ),
               ),
               const Divider(height: 10),
-              const Padding(
-                padding: EdgeInsets.fromLTRB(10, 4, 10, 4),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(10, 4, 10, 4),
                 child: Text(
-                  'Only supports 2.4GHz network',
+                  l10n.only24GHz,
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 14, color: Colors.red),
+                  style: const TextStyle(fontSize: 14, color: Colors.red),
                 ),
               ),
               const Divider(height: 10),
@@ -376,9 +379,9 @@ class _EspTouchPageState extends State<EspTouchPage> {
                               _focusNode2.unfocus();
                               _doStartConfig();
                             },
-                      child: const Text(
-                        "CONFIG",
-                        style: TextStyle(fontSize: 20),
+                      child: Text(
+                        l10n.config,
+                        style: const TextStyle(fontSize: 20),
                       ),
                     ),
                   ],
@@ -386,11 +389,11 @@ class _EspTouchPageState extends State<EspTouchPage> {
               ),
               const Divider(height: 10),
               const Divider(height: 10),
-              const Padding(
-                padding: EdgeInsets.fromLTRB(10, 10, 10, 10),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(10, 10, 10, 10),
                 child: Text(
-                  'Configured devices:',
-                  style: TextStyle(fontSize: 18, color: Colors.green),
+                  l10n.configuredDevices,
+                  style: const TextStyle(fontSize: 18, color: Colors.green),
                 ),
               ),
               ListView.builder(

@@ -10,6 +10,7 @@ import 'package:hoozz_play/core/period_call.dart';
 import 'package:hoozz_play/themes/theme.dart';
 import 'package:hoozz_play/core/simple_ctrl.dart';
 import 'package:hoozz_play/core/parameter_stateful.dart';
+import 'package:hoozz_play/l10n/app_localizations.dart';
 import 'dart:developer' as developer;
 
 const String _logName = 'Discover';
@@ -123,9 +124,9 @@ class _DiscoverPageState extends State<DiscoverPage> {
                         ),
                       ).then((value) {});
                     },
-                    child: const Text(
-                      'Go',
-                      style: TextStyle(color: Colors.green),
+                    child: Text(
+                      AppLocalizations.of(context)!.go,
+                      style: const TextStyle(color: Colors.green),
                     ),
                   ),
                 ),

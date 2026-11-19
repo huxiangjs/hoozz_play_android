@@ -12,6 +12,7 @@ import 'package:hoozz_play/core/device_storage.dart';
 import 'package:hoozz_play/core/firmware_version_row.dart';
 import 'package:hoozz_play/core/simple_ctrl.dart';
 import 'package:hoozz_play/themes/theme.dart';
+import 'package:hoozz_play/l10n/app_localizations.dart';
 import 'dart:developer' as developer;
 
 const String _logName = 'Device Configure';
@@ -86,6 +87,8 @@ class _InfoTableState extends State<_InfoTable> {
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
+
     return Table(
       columnWidths: const {
         0: IntrinsicColumnWidth(),
@@ -93,7 +96,7 @@ class _InfoTableState extends State<_InfoTable> {
       },
       children: [
         _infoRow(
-          'NAME:',
+          l10n.nameLabel,
           Text(
             widget.device.name,
             style: const TextStyle(fontSize: 18, fontFamily: subFontFamily),
@@ -101,23 +104,23 @@ class _InfoTableState extends State<_InfoTable> {
           padding: const EdgeInsets.fromLTRB(10, 24, 10, 2),
         ),
         _infoRow(
-          'CLASS:',
+          l10n.classLabel,
           Text(
             DeviceBindingList.binding[widget.device.classId] == null
-                ? 'Unknown'
+                ? l10n.unknown
                 : DeviceBindingList.binding[widget.device.classId]!.describe,
             style: const TextStyle(fontSize: 18, fontFamily: subFontFamily),
           ),
         ),
         _infoRow(
-          'ID:',
+          l10n.idLabel,
           Text(
             widget.device.id,
             style: const TextStyle(fontSize: 18, fontFamily: subFontFamily),
           ),
         ),
         _infoRow(
-          'IP:',
+          l10n.ipLabel,
           Text(
             '${widget.device.ip} : ${widget.device.port}',
             style: const TextStyle(fontSize: 18, fontFamily: subFontFamily),
@@ -127,7 +130,7 @@ class _InfoTableState extends State<_InfoTable> {
         // the version could be fetched from the device
         if (_version != null)
           _infoRow(
-            'VERSION:',
+            l10n.versionLabel,
             FirmwareVersionRow(
               device: widget.device,
               ctrl: widget.ctrl!,
@@ -205,33 +208,35 @@ class DeviceConfig extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Configure device"),
+        title: Text(l10n.configureDevice),
         // Restart the device (top right); only for device types with the
         // esp8266 control channel (ctrlHandle != null)
         actions: [
           if (ctrlHandle != null)
             IconButton(
-              tooltip: 'Restart device',
+              tooltip: l10n.restartDevice,
               icon: const Icon(Icons.restart_alt),
               onPressed: () async {
                 final bool? confirmed = await showDialog<bool>(
                   context: context,
                   builder: (BuildContext context) => AlertDialog(
-                    title: const Text('Restart device'),
-                    content: const Text(
-                      'The device will restart shortly and may be '
-                      'unreachable for a while. Continue?',
+                    title: Text(AppLocalizations.of(context)!.restartDevice),
+                    content: Text(
+                      AppLocalizations.of(context)!.restartDeviceConfirm,
                     ),
                     actions: [
                       TextButton(
                         onPressed: () => Navigator.pop(context, false),
-                        child: const Text('Cancel'),
+                        child:
+                            Text(AppLocalizations.of(context)!.cancel),
                       ),
                       TextButton(
                         onPressed: () => Navigator.pop(context, true),
-                        child: const Text('Restart'),
+                        child: Text(AppLocalizations.of(context)!.restart),
                       ),
                     ],
                   ),
@@ -250,8 +255,8 @@ class DeviceConfig extends StatelessWidget {
                 messenger.showSnackBar(
                   SnackBar(
                     content: Text(ok
-                        ? 'Device is restarting'
-                        : 'Restart request failed'),
+                        ? AppLocalizations.of(context)!.deviceIsRestarting
+                        : AppLocalizations.of(context)!.restartRequestFailed),
                   ),
                 );
               },
@@ -291,8 +296,8 @@ class DeviceConfig extends StatelessWidget {
                     ),
                     // maxLines: 2,
                     decoration: _DeviceInofInputDecoration(
-                      'Device nick name',
-                      'Set a nick name for your device',
+                      l10n.deviceNickName,
+                      l10n.deviceNickNameHint,
                     ),
                   ),
                 ),
@@ -318,8 +323,8 @@ class DeviceConfig extends StatelessWidget {
                       // maxLines: 2,
                       keyboardType: TextInputType.multiline,
                       decoration: _DeviceInofInputDecoration(
-                        'Access key',
-                        'Set access key for your device',
+                        l10n.accessKey,
+                        l10n.accessKeyHint,
                         IconButton(
                           onPressed: () {
                             final Random random = Random();
@@ -345,7 +350,7 @@ class DeviceConfig extends StatelessWidget {
                 Visibility(
                   visible: infoEdit.ctrlReady,
                   child: CheckboxListTile(
-                    title: const Text('Sync name to remote'),
+                    title: Text(l10n.syncNameToRemote),
                     // subtitle: const Text('subtitle'),
                     value: infoEdit.syncName,
                     onChanged: (bool? value) =>
@@ -372,9 +377,9 @@ class DeviceConfig extends StatelessWidget {
                       );
                       onSavePressed(infoEdit);
                     },
-                    child: const Text(
-                      "Save",
-                      style: TextStyle(fontSize: 20, fontFamily: subFontFamily),
+                    child: Text(
+                      l10n.save,
+                      style: const TextStyle(fontSize: 20, fontFamily: subFontFamily),
                     ),
                   ),
                 ),

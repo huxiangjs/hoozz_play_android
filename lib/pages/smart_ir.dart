@@ -20,6 +20,7 @@ import 'package:hoozz_play/core/simple_progress_dialog.dart';
 import 'package:hoozz_play/core/simple_ctrl.dart';
 import 'package:hoozz_play/core/device_storage.dart';
 import 'package:hoozz_play/core/simple_snackbar.dart';
+import 'package:hoozz_play/l10n/app_localizations.dart';
 import 'package:hoozz_play/core/tcp_crypto.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:path_provider/path_provider.dart';
@@ -410,7 +411,7 @@ class SmartIRDeviceCtrlPageState extends ParameterStatefulState {
     ValueNotifier<double> progress = ValueNotifier<double>(0);
     SimpleProgressDialog.show(
       context,
-      'Deleting ${keyNames.length} key${keyNames.length > 1 ? 's' : ''}...',
+      AppLocalizations.of(context)!.deletingKeys(keyNames.length),
       progress,
     );
     int okCount = 0;
@@ -445,10 +446,11 @@ class SmartIRDeviceCtrlPageState extends ParameterStatefulState {
     SimpleSnackBar.show(
       context,
       okCount == keyNames.length
-          ? 'Removed ${keyNames.length} key${keyNames.length > 1 ? 's' : ''}'
+          ? AppLocalizations.of(context)!.removedKeys(keyNames.length)
           : okCount > 0
-              ? 'Removed $okCount/${keyNames.length} keys'
-              : 'Delete failed',
+              ? AppLocalizations.of(context)!.removedKeysPartial(
+                  okCount, keyNames.length)
+              : AppLocalizations.of(context)!.deleteFailed,
       okCount == keyNames.length ? Colors.green : Colors.red,
     );
   }
@@ -531,7 +533,9 @@ class SmartIRDeviceCtrlPageState extends ParameterStatefulState {
             context,
             (route) => route.settings.name == '/smart_ir',
           );
-          SimpleSnackBar.show(context, 'Abnormal device data', Colors.red);
+          SimpleSnackBar.show(
+              context, AppLocalizations.of(context)!.abnormalDeviceData,
+              Colors.red);
         }
       });
 
@@ -548,7 +552,9 @@ class SmartIRDeviceCtrlPageState extends ParameterStatefulState {
             context,
             (route) => route.settings.name == '/smart_ir',
           );
-          SimpleSnackBar.show(context, 'Device connection failed', Colors.red);
+          SimpleSnackBar.show(
+              context, AppLocalizations.of(context)!.deviceConnectionFailed,
+              Colors.red);
         }
       });
     }
@@ -710,7 +716,7 @@ class SmartIRDeviceCtrlPageState extends ParameterStatefulState {
     ValueNotifier<double> progress = ValueNotifier<double>(0);
     SimpleProgressDialog.show(
       context,
-      'Exporting ${keyNames.length} key${keyNames.length > 1 ? 's' : ''}...',
+      AppLocalizations.of(context)!.exportingKeys(keyNames.length),
       progress,
     );
     await _ensureStoragePermission();
@@ -758,10 +764,11 @@ class SmartIRDeviceCtrlPageState extends ParameterStatefulState {
     SimpleSnackBar.show(
       context,
       okCount == keyNames.length
-          ? 'Saved: $savedFolder'
+          ? AppLocalizations.of(context)!.savedTo('$savedFolder')
           : okCount > 0
-              ? 'Exported $okCount/${keyNames.length} keys'
-              : 'Export failed',
+              ? AppLocalizations.of(context)!.exportedKeysPartial(
+                  okCount, keyNames.length)
+              : AppLocalizations.of(context)!.exportFailed,
       okCount == keyNames.length ? Colors.green : Colors.red,
     );
   }
@@ -825,7 +832,7 @@ class SmartIRDeviceCtrlPageState extends ParameterStatefulState {
       if (path == null) continue;
       String keyName = _keyNameFromPath(path);
       if (utf8.encode(keyName).length > _maxKeyNameLength) {
-        SimpleSnackBar.show(context, 'Key name too long', Colors.red);
+        SimpleSnackBar.show(context, AppLocalizations.of(context)!.keyNameTooLong, Colors.red);
         return;
       }
       int size;
@@ -833,13 +840,13 @@ class SmartIRDeviceCtrlPageState extends ParameterStatefulState {
         size = await File(path).length();
       } catch (e) {
         if (!mounted) return;
-        SimpleSnackBar.show(context, 'Read file failed', Colors.red);
+        SimpleSnackBar.show(context, AppLocalizations.of(context)!.readFileFailed, Colors.red);
         return;
       }
       if (size < 1 || size > _maxKeyDataSize) {
         SimpleSnackBar.show(
           context,
-          'Key data must be 1-1024 bytes',
+          AppLocalizations.of(context)!.keyDataSizeInvalid,
           Colors.red,
         );
         return;
@@ -852,7 +859,7 @@ class SmartIRDeviceCtrlPageState extends ParameterStatefulState {
     ValueNotifier<double> progress = ValueNotifier<double>(0);
     SimpleProgressDialog.show(
       context,
-      'Importing ${files.length} file${files.length > 1 ? 's' : ''}...',
+      AppLocalizations.of(context)!.importingFiles(files.length),
       progress,
     );
     int okCount = 0;
@@ -887,16 +894,19 @@ class SmartIRDeviceCtrlPageState extends ParameterStatefulState {
     SimpleSnackBar.show(
       context,
       okCount == files.length
-          ? 'Imported ${files.length} keys'
+          ? AppLocalizations.of(context)!.importedKeys(files.length)
           : okCount > 0
-              ? 'Imported $okCount/${files.length} keys'
-              : 'Import failed',
+              ? AppLocalizations.of(context)!.importedKeysPartial(
+                  okCount, files.length)
+              : AppLocalizations.of(context)!.importFailed,
       okCount == files.length ? Colors.green : Colors.red,
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
+
     if (_isFirstRender) {
       _isFirstRender = false;
       WidgetsBinding.instance.addPostFrameCallback(
@@ -910,7 +920,7 @@ class SmartIRDeviceCtrlPageState extends ParameterStatefulState {
             return;
           }
           _connectingDialog = true;
-          SimpleShowDialog.show(context, 'Device connecting...');
+          SimpleShowDialog.show(context, AppLocalizations.of(context)!.deviceConnecting);
         },
       );
     }
@@ -933,48 +943,47 @@ class SmartIRDeviceCtrlPageState extends ParameterStatefulState {
                 if (_transferBusy) return;
                 _importKeysFromPhone();
               },
-              tooltip: 'Import keys',
+              tooltip: l10n.importKeys,
             ),
             IconButton(
               icon: const Icon(Icons.file_download),
               onPressed: () {
                 if (_transferBusy) return;
                 if (_selectedKeys.isEmpty) {
-                  SimpleSnackBar.show(context, 'Select keys first', Colors.red);
+                  SimpleSnackBar.show(context, l10n.selectKeysFirst, Colors.red);
                   return;
                 }
                 _exportKeys(List<String>.from(_selectedKeys));
               },
-              tooltip: 'Export selected keys',
+              tooltip: l10n.exportSelectedKeys,
             ),
             IconButton(
               icon: const Icon(Icons.delete, color: Colors.red),
               onPressed: () {
                 if (_transferBusy) return;
                 if (_selectedKeys.isEmpty) {
-                  SimpleSnackBar.show(context, 'Select keys first', Colors.red);
+                  SimpleSnackBar.show(context, l10n.selectKeysFirst, Colors.red);
                   return;
                 }
                 showDialog<bool>(
                   context: context,
                   builder: (context) {
                     return AlertDialog(
-                      title: const Text('Warning'),
+                      title: Text(AppLocalizations.of(context)!.warning),
                       content: Text(
-                        'Are you sure you want to delete the selected '
-                        '${_selectedKeys.length} key'
-                        '${_selectedKeys.length > 1 ? 's' : ''}?',
+                        AppLocalizations.of(context)!
+                            .deleteKeysConfirm(_selectedKeys.length),
                         style: const TextStyle(color: Colors.red),
                       ),
                       actions: <Widget>[
                         TextButton(
-                          child: const Text('Yes'),
+                          child: Text(AppLocalizations.of(context)!.yes),
                           onPressed: () => Navigator.of(context).pop(true),
                         ),
                         TextButton(
-                          child: const Text(
-                            'No',
-                            style: TextStyle(color: Colors.black),
+                          child: Text(
+                            AppLocalizations.of(context)!.no,
+                            style: const TextStyle(color: Colors.black),
                           ),
                           onPressed: () {
                             Navigator.of(context).pop(false);
@@ -994,7 +1003,7 @@ class SmartIRDeviceCtrlPageState extends ParameterStatefulState {
                   }
                 });
               },
-              tooltip: 'Delete selected keys',
+              tooltip: l10n.deleteSelectedKeys,
             ),
           ],
           // Key transfer (upload/download/delete) mode button
@@ -1016,8 +1025,9 @@ class SmartIRDeviceCtrlPageState extends ParameterStatefulState {
                 }
               });
             },
-            tooltip:
-                _transferMode ? 'Exit transfer mode' : 'Key transfer mode',
+            tooltip: _transferMode
+                ? l10n.exitTransferMode
+                : l10n.keyTransferMode,
           ),
           // Config device button
           IconButton(
@@ -1089,7 +1099,9 @@ class SmartIRDeviceCtrlPageState extends ParameterStatefulState {
                   } else {
                     developer.log('Send failed', name: _logName);
                     if (mounted) {
-                      SimpleSnackBar.show(context, 'Send failed', Colors.red);
+                      SimpleSnackBar.show(
+                          context, AppLocalizations.of(context)!.sendFailed,
+                          Colors.red);
                     }
                   }
                 });
@@ -1184,14 +1196,16 @@ class SmartIRDeviceCtrlPageState extends ParameterStatefulState {
                 builder: (BuildContext context, StateSetter setState) {
                   _dialogSetState = setState;
                   return AlertDialog(
-                    title: const Text('Add key'),
+                    title: Text(AppLocalizations.of(context)!.addKey),
                     content: Wrap(
                       alignment: WrapAlignment.center,
                       children: [
                         Text(
                           _irRxDataVaild
-                              ? '$_irRxCount | ${_irRxLength}p'
-                              : '--- | ---p',
+                              ? AppLocalizations.of(context)!.irDataFormat(
+                                  _irRxCount.toString(),
+                                  _irRxLength.toString())
+                              : AppLocalizations.of(context)!.irDataEmpty,
                           textAlign: TextAlign.center,
                           style: TextStyle(color: Colors.blue, fontSize: 26),
                         ),
@@ -1204,7 +1218,8 @@ class SmartIRDeviceCtrlPageState extends ParameterStatefulState {
                             fontFamily: subFontFamily,
                           ),
                           decoration: InputDecoration(
-                            labelText: "Enter key name",
+                            labelText:
+                                AppLocalizations.of(context)!.enterKeyName,
                           ),
                           maxLength: _maxKeyNameLength,
                           onChanged: (value) {
@@ -1219,13 +1234,14 @@ class SmartIRDeviceCtrlPageState extends ParameterStatefulState {
                         child: Wrap(
                           children: [
                             TextButton(
-                              child: const Text('Save'),
+                              child:
+                                  Text(AppLocalizations.of(context)!.save),
                               onPressed: () => Navigator.of(context).pop(true),
                             ),
                             TextButton(
-                              child: const Text(
-                                'Test',
-                                style: TextStyle(color: Colors.green),
+                              child: Text(
+                                AppLocalizations.of(context)!.test,
+                                style: const TextStyle(color: Colors.green),
                               ),
                               onPressed: () {
                                 developer.log('Test', name: _logName);
@@ -1259,9 +1275,9 @@ class SmartIRDeviceCtrlPageState extends ParameterStatefulState {
                         ),
                       ),
                       TextButton(
-                        child: const Text(
-                          'Cancel',
-                          style: TextStyle(color: Colors.black),
+                        child: Text(
+                          AppLocalizations.of(context)!.cancel,
+                          style: const TextStyle(color: Colors.black),
                         ),
                         onPressed: () => Navigator.of(context).pop(false),
                       ),
@@ -1294,19 +1310,19 @@ class SmartIRDeviceCtrlPageState extends ParameterStatefulState {
                     value[1] == _irResultOk) {
                   developer.log('Save ok', name: _logName);
                   if (mounted) {
-                    SimpleSnackBar.show(context, 'Saved', Colors.green);
+                    SimpleSnackBar.show(context, AppLocalizations.of(context)!.saved, Colors.green);
                   }
                 } else {
                   developer.log('Save failed', name: _logName);
                   if (mounted) {
-                    SimpleSnackBar.show(context, 'Save failed', Colors.red);
+                    SimpleSnackBar.show(context, AppLocalizations.of(context)!.saveFailed, Colors.red);
                   }
                 }
               });
             }
           });
         },
-        tooltip: 'Add key',
+        tooltip: l10n.addKey,
         child: const Icon(Icons.add),
       ),
     );
@@ -1361,7 +1377,8 @@ class SmartIRConfigDevicePageState extends ParameterStatefulState {
       ctrlHandle: _simpleCtrlHandle,
       onSavePressed: (infoEdit) {
         if (infoEdit.ctrlReady) {
-          SimpleShowDialog.show(context, "Verifying device...");
+          SimpleShowDialog.show(
+              context, AppLocalizations.of(context)!.verifyingDevice);
           Future<bool> result = () async {
             // Set name
             if (infoEdit.syncName) {
@@ -1384,14 +1401,14 @@ class SmartIRConfigDevicePageState extends ParameterStatefulState {
               );
               SimpleSnackBar.show(
                 context,
-                'Device information saved',
+                AppLocalizations.of(context)!.deviceInformationSaved,
                 Colors.green,
               );
             } else {
               Navigator.pop(context);
               SimpleSnackBar.show(
                 context,
-                'Failed to configure device information',
+                AppLocalizations.of(context)!.configureDeviceFailed,
                 Colors.red,
               );
             }
@@ -1402,7 +1419,8 @@ class SmartIRConfigDevicePageState extends ParameterStatefulState {
           }
           _deviceInfoSave();
           Navigator.pop(context);
-          SimpleSnackBar.show(context, 'Device saved', Colors.green);
+          SimpleSnackBar.show(
+              context, AppLocalizations.of(context)!.deviceSaved, Colors.green);
         }
       },
     );

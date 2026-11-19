@@ -16,6 +16,7 @@ import 'package:hoozz_play/core/simple_showdialog.dart';
 import 'package:hoozz_play/core/simple_ctrl.dart';
 import 'package:hoozz_play/core/device_storage.dart';
 import 'package:hoozz_play/core/simple_snackbar.dart';
+import 'package:hoozz_play/l10n/app_localizations.dart';
 import 'dart:developer' as developer;
 
 import 'package:hoozz_play/themes/theme.dart';
@@ -155,7 +156,7 @@ class SensorDeviceCtrlPageState extends ParameterStatefulState {
             tmp = '${sensorData}ppm';
             break;
           default:
-            tmp = 'Unsupported';
+            tmp = AppLocalizations.of(context)!.unsupported;
         }
 
         if (!mounted) return;
@@ -195,7 +196,7 @@ class SensorDeviceCtrlPageState extends ParameterStatefulState {
             context,
             (route) => route.settings.name == '/sensor',
           );
-          SimpleSnackBar.show(context, 'Abnormal device data', Colors.red);
+          SimpleSnackBar.show(context, AppLocalizations.of(context)!.abnormalDeviceData, Colors.red);
         }
       });
 
@@ -209,7 +210,7 @@ class SensorDeviceCtrlPageState extends ParameterStatefulState {
       _simpleCtrlHandle.maybeReconnect().then((bool ok) {
         if (!ok && mounted) {
           Navigator.popUntil(context, (route) => route.settings.name == '/sensor');
-          SimpleSnackBar.show(context, 'Device connection failed', Colors.red);
+          SimpleSnackBar.show(context, AppLocalizations.of(context)!.deviceConnectionFailed, Colors.red);
         }
       });
     }
@@ -252,7 +253,7 @@ class SensorDeviceCtrlPageState extends ParameterStatefulState {
             return;
           }
           _connectingDialog = true;
-          SimpleShowDialog.show(context, 'Device connecting...');
+          SimpleShowDialog.show(context, AppLocalizations.of(context)!.deviceConnecting);
         },
       );
     }
@@ -327,7 +328,7 @@ class SensorDeviceCtrlPageState extends ParameterStatefulState {
                           ),
                         ),
                         Text(
-                          hasData ? sensorKeyList[index].data! : 'No data',
+                          hasData ? sensorKeyList[index].data! : AppLocalizations.of(context)!.noData,
                           style: TextStyle(
                             fontFamily: subFontFamily,
                             fontSize: 16,
@@ -395,7 +396,7 @@ class SensorConfigDevicePageState extends ParameterStatefulState {
       ctrlHandle: _simpleCtrlHandle,
       onSavePressed: (infoEdit) {
         if (infoEdit.ctrlReady) {
-          SimpleShowDialog.show(context, "Verifying device...");
+          SimpleShowDialog.show(context, AppLocalizations.of(context)!.verifyingDevice);
           Future<bool> result = () async {
             // Set name
             if (infoEdit.syncName) {
@@ -418,14 +419,14 @@ class SensorConfigDevicePageState extends ParameterStatefulState {
               );
               SimpleSnackBar.show(
                 context,
-                'Device information saved',
+                AppLocalizations.of(context)!.deviceInformationSaved,
                 Colors.green,
               );
             } else {
               Navigator.pop(context);
               SimpleSnackBar.show(
                 context,
-                'Failed to configure device information',
+                AppLocalizations.of(context)!.configureDeviceFailed,
                 Colors.red,
               );
             }
@@ -436,7 +437,7 @@ class SensorConfigDevicePageState extends ParameterStatefulState {
           }
           _deviceInfoSave();
           Navigator.pop(context);
-          SimpleSnackBar.show(context, 'Device saved', Colors.green);
+          SimpleSnackBar.show(context, AppLocalizations.of(context)!.deviceSaved, Colors.green);
         }
       },
     );

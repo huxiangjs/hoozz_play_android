@@ -6,11 +6,10 @@
 
 import 'package:flutter/material.dart';
 import 'package:hoozz_play/core/vpn_ctrl.dart';
+import 'package:hoozz_play/l10n/app_localizations.dart';
 
 class HoozzPlayHomePage extends StatefulWidget {
   const HoozzPlayHomePage({super.key});
-
-  final String title = 'Hoozz Play Home';
 
   @override
   State<HoozzPlayHomePage> createState() => _HoozzPlayHomePageState();
@@ -101,9 +100,11 @@ class _HoozzPlayHomePageState extends State<HoozzPlayHomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.title),
+        title: Text(l10n.homeTitle),
         actions: [
           Visibility(
             visible: _vpnValid,
@@ -144,7 +145,7 @@ class _HoozzPlayHomePageState extends State<HoozzPlayHomePage> {
         onPressed: () {
           Navigator.pushNamed(context, '/settings');
         },
-        tooltip: 'Settings',
+        tooltip: l10n.settings,
         child: const Icon(Icons.build),
       ),
     );

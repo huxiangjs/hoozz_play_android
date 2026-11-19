@@ -12,6 +12,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:flutter/rendering.dart';
 import 'package:hoozz_play/themes/theme.dart';
 import 'package:hoozz_play/adapter/mlx90640_adapter.dart';
+import 'package:hoozz_play/l10n/app_localizations.dart';
 
 class MLX90640HomePage extends StatefulWidget {
   const MLX90640HomePage({super.key});
@@ -85,7 +86,8 @@ class _MLX90640HomePageState extends State<MLX90640HomePage> {
                 if (success == false) {
                   setState(() {
                     _generateSnackBar(
-                        'Error setting refresh rate set to ${desc}Hz',
+                        AppLocalizations.of(context)!
+                            .errorSettingRefreshRate(desc),
                         Colors.red);
                     _refreshRate = value;
                   });
@@ -154,14 +156,14 @@ class _MLX90640HomePageState extends State<MLX90640HomePage> {
       // Display a success message
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Screenshot saved to $imagePath'),
+          content: Text(AppLocalizations.of(context)!.screenshotSaved(imagePath)),
         ),
       );
     } catch (e) {
       // Display an error message
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Failed to take screenshot: $e'),
+          content: Text(AppLocalizations.of(context)!.screenshotFailed('$e')),
         ),
       );
     }
@@ -186,7 +188,7 @@ class _MLX90640HomePageState extends State<MLX90640HomePage> {
             setState(() {
               _connectState = value as bool;
               if (_connectState == true) {
-                _generateSnackBar('Connection succeeded', Colors.green);
+                _generateSnackBar(AppLocalizations.of(context)!.connectionSucceeded, Colors.green);
               }
             });
             break;
@@ -271,6 +273,7 @@ class _MLX90640HomePageState extends State<MLX90640HomePage> {
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
     MaterialColor stateColor = _connectState ? Colors.green : Colors.red;
 
     return Scaffold(
@@ -331,7 +334,7 @@ class _MLX90640HomePageState extends State<MLX90640HomePage> {
                           child: Visibility(
                             visible: _trace,
                             child: Text(
-                              '${_crosshairTemperature.toStringAsFixed(2)}°C',
+                              l10n.tempValue(_crosshairTemperature.toStringAsFixed(2)),
                               style: const TextStyle(
                                 fontSize: 14,
                                 color: Colors.black,
@@ -359,7 +362,7 @@ class _MLX90640HomePageState extends State<MLX90640HomePage> {
                           child: Visibility(
                             visible: _trace,
                             child: Text(
-                              '${_maxTemperature.toStringAsFixed(2)}°C',
+                              l10n.tempValue(_maxTemperature.toStringAsFixed(2)),
                               style: const TextStyle(
                                 fontSize: 14,
                                 color: Colors.black,
@@ -387,7 +390,7 @@ class _MLX90640HomePageState extends State<MLX90640HomePage> {
                           child: Visibility(
                             visible: _trace,
                             child: Text(
-                              '${_minTemperature.toStringAsFixed(2)}°C',
+                              l10n.tempValue(_minTemperature.toStringAsFixed(2)),
                               style: const TextStyle(
                                 fontSize: 14,
                                 color: Colors.black,
@@ -406,15 +409,15 @@ class _MLX90640HomePageState extends State<MLX90640HomePage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'MAX: ${_maxTemperature.toStringAsFixed(2)}°C',
+                          l10n.maxTemp(_maxTemperature.toStringAsFixed(2)),
                           style: const TextStyle(fontSize: 20),
                         ),
                         Text(
-                          'MIN: ${_minTemperature.toStringAsFixed(2)}°C',
+                          l10n.minTemp(_minTemperature.toStringAsFixed(2)),
                           style: const TextStyle(fontSize: 20),
                         ),
                         Text(
-                          'Crosshair: ${_crosshairTemperature.toStringAsFixed(2)}°C',
+                          l10n.crosshairTemp(_crosshairTemperature.toStringAsFixed(2)),
                           style: const TextStyle(fontSize: 20),
                         ),
                         const Divider(
@@ -423,7 +426,7 @@ class _MLX90640HomePageState extends State<MLX90640HomePage> {
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: <Widget>[
-                            const Text('Refresh\nrate(Hz):'),
+                            Text(l10n.refreshRateLabel),
                             _generateRefreshRateRadioItem(2, '2'),
                             _generateRefreshRateRadioItem(3, '4'),
                             _generateRefreshRateRadioItem(4, '8'),
@@ -434,7 +437,7 @@ class _MLX90640HomePageState extends State<MLX90640HomePage> {
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: <Widget>[
-                            const Text('Rotate:'),
+                            Text(l10n.rotateLabel),
                             _generateRotateItem(0),
                             _generateRotateItem(90),
                             _generateRotateItem(180),
@@ -444,7 +447,7 @@ class _MLX90640HomePageState extends State<MLX90640HomePage> {
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: <Widget>[
-                            const Text('Trace:'),
+                            Text(l10n.traceLabel),
                             Switch(
                               value: _trace,
                               onChanged: (bool value) {
@@ -458,7 +461,7 @@ class _MLX90640HomePageState extends State<MLX90640HomePage> {
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: <Widget>[
-                            const Text('Mirror:'),
+                            Text(l10n.mirrorLabel),
                             Switch(
                               value: MLX90640Adapter.mirror,
                               onChanged: (bool value) {
@@ -472,7 +475,7 @@ class _MLX90640HomePageState extends State<MLX90640HomePage> {
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            const Text('Emissivity:'),
+                            Text(l10n.emissivityLabel),
                             Expanded(
                               child: Slider(
                                 value: _emissivity,
@@ -491,7 +494,8 @@ class _MLX90640HomePageState extends State<MLX90640HomePage> {
                                     if (success == false) {
                                       setState(() {
                                         _generateSnackBar(
-                                            'Error setting emissivity set to ${_emissivity.toStringAsFixed(2)}',
+                                            AppLocalizations.of(context)!
+                                                .errorSettingEmissivity(_emissivity.toStringAsFixed(2)),
                                             Colors.red);
                                         _emissivity = value;
                                       });
@@ -505,7 +509,7 @@ class _MLX90640HomePageState extends State<MLX90640HomePage> {
                         Row(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            const Text('Ta shift:'),
+                            Text(l10n.taShiftLabel),
                             Expanded(
                               child: Slider(
                                 value: _taShift,
@@ -524,7 +528,8 @@ class _MLX90640HomePageState extends State<MLX90640HomePage> {
                                     if (success == false) {
                                       setState(() {
                                         _generateSnackBar(
-                                            'Error setting Ta shift set to ${_taShift.toStringAsFixed(2)}',
+                                            AppLocalizations.of(context)!
+                                                .errorSettingTaShift(_taShift.toStringAsFixed(2)),
                                             Colors.red);
                                         _taShift = value;
                                       });
@@ -546,7 +551,7 @@ class _MLX90640HomePageState extends State<MLX90640HomePage> {
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _takeScreenshot,
-        tooltip: 'Screenshot',
+        tooltip: l10n.screenshot,
         child: const Icon(Icons.screenshot),
       ),
     );

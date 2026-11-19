@@ -1,0 +1,438 @@
+{
+  "@@locale": "en",
+
+  "homeTitle": "Hoozz Play Home",
+  "settings": "Settings",
+  "settingsTitle": "Hoozz Play Settings",
+  "toolsTitle": "Hoozz Play Tools",
+  "tools": "Tools",
+  "vpn": "VPN",
+  "about": "About",
+  "author": "Author",
+  "license": "License",
+  "language": "Language",
+  "followSystem": "Follow system",
+  "languageEnglish": "English",
+  "languageChinese": "Chinese",
+
+  "toolsEspTouchDesc": "Smart configuration network",
+  "toolsDiscoverDesc": "Discover configured devices",
+
+  "ssid": "SSID",
+  "ssidHint": "It's your Wi-Fi network name (SSID)",
+  "password": "PASSWORD",
+  "passwordHint": "It's your Wi-Fi network password",
+  "only24GHz": "Only supports 2.4GHz network",
+  "config": "CONFIG",
+  "configuredDevices": "Configured devices:",
+  "unableStartConfig": "Unable to start configuration",
+  "cantGetWifi": "Can't get WiFi information",
+
+  "go": "Go",
+  "cancel": "Cancel",
+  "yes": "Yes",
+  "no": "No",
+  "save": "Save",
+  "start": "Start",
+  "test": "Test",
+  "restart": "Restart",
+  "update": "Update",
+  "upgrade": "Upgrade",
+  "select": "Select",
+  "warning": "Warning",
+
+  "deleteDeviceConfirm": "Are you sure you want to delete this device?",
+  "online": "[online]",
+  "offline": "[offline]",
+  "deviceId": "id: {id}",
+  "@deviceId": {
+    "placeholders": {
+      "id": {
+        "type": "String"
+      }
+    }
+  },
+
+  "addNewDevice": "Add new device",
+  "nickName": "Nick name",
+  "nickNameHint": "Give your device a name",
+  "repository": "Repository",
+  "repositoryHint": "Enter the device repository URL",
+  "privateKey": "Private key",
+  "privateKeyHint": "Enter your private key to access the repository",
+  "pleaseWait": "Please wait...",
+  "addedSuccessfully": "Added successfully",
+  "verificationFailed": "Verification failed",
+  "deviceInit": "Device Init...",
+  "callingDevice": "Calling device...",
+  "waitResult": "Wait result...",
+  "stateLabel": "State: {state}",
+  "@stateLabel": {
+    "placeholders": {
+      "state": {
+        "type": "String"
+      }
+    }
+  },
+  "onState": "ON",
+  "offState": "OFF",
+  "unknown": "Unknown",
+  "clickMe": "Click Me",
+
+  "errorSettingRefreshRate": "Error setting refresh rate set to {rate}Hz",
+  "@errorSettingRefreshRate": {
+    "placeholders": {
+      "rate": {
+        "type": "String"
+      }
+    }
+  },
+  "connectionSucceeded": "Connection succeeded",
+  "screenshotSaved": "Screenshot saved to {path}",
+  "@screenshotSaved": {
+    "placeholders": {
+      "path": {
+        "type": "String"
+      }
+    }
+  },
+  "screenshotFailed": "Failed to take screenshot: {error}",
+  "@screenshotFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "maxTemp": "MAX: {temp}°C",
+  "@maxTemp": {
+    "placeholders": {
+      "temp": {
+        "type": "String"
+      }
+    }
+  },
+  "minTemp": "MIN: {temp}°C",
+  "@minTemp": {
+    "placeholders": {
+      "temp": {
+        "type": "String"
+      }
+    }
+  },
+  "crosshairTemp": "Crosshair: {temp}°C",
+  "@crosshairTemp": {
+    "placeholders": {
+      "temp": {
+        "type": "String"
+      }
+    }
+  },
+  "tempValue": "{temp}°C",
+  "@tempValue": {
+    "placeholders": {
+      "temp": {
+        "type": "String"
+      }
+    }
+  },
+  "refreshRateLabel": "Refresh\nrate(Hz):",
+  "rotateLabel": "Rotate:",
+  "traceLabel": "Trace:",
+  "mirrorLabel": "Mirror:",
+  "emissivityLabel": "Emissivity:",
+  "errorSettingEmissivity": "Error setting emissivity set to {value}",
+  "@errorSettingEmissivity": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "taShiftLabel": "Ta shift:",
+  "errorSettingTaShift": "Error setting Ta shift set to {value}",
+  "@errorSettingTaShift": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "screenshot": "Screenshot",
+
+  "configureDevice": "Configure device",
+  "nameLabel": "NAME:",
+  "classLabel": "CLASS:",
+  "idLabel": "ID:",
+  "ipLabel": "IP:",
+  "versionLabel": "VERSION:",
+  "restartDevice": "Restart device",
+  "restartDeviceConfirm": "The device will restart shortly and may be unreachable for a while. Continue?",
+  "deviceIsRestarting": "Device is restarting",
+  "restartRequestFailed": "Restart request failed",
+  "deviceNickName": "Device nick name",
+  "deviceNickNameHint": "Set a nick name for your device",
+  "accessKey": "Access key",
+  "accessKeyHint": "Set access key for your device",
+  "syncNameToRemote": "Sync name to remote",
+
+  "updateAvailable": "Update available",
+  "versionLine": "Version: {version}",
+  "@versionLine": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      }
+    }
+  },
+  "publishedLine": "Published: {time}",
+  "@publishedLine": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "downloadLine": "Download: {name} ({size})",
+  "@downloadLine": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "size": {
+        "type": "String"
+      }
+    }
+  },
+  "noFirmwareZip": "No firmware zip in the release",
+  "downloadFailed": "Download failed: {error}",
+  "@downloadFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "extractFirmwareFailed": "Extract firmware failed: {error}",
+  "@extractFirmwareFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "otaTransferFailed": "OTA transfer failed: {error}",
+  "@otaTransferFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "downloadingFirmware": "Downloading firmware",
+  "transferringFirmware": "Transferring firmware",
+  "doNotPowerOff": "Do not power off the device",
+  "connectingToDevice": "Connecting to device...",
+  "transferProgress": "Device: {percent}%   ({sent} / {total})",
+  "@transferProgress": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      },
+      "sent": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+  "sizeProgress": "{sent} / {total}",
+  "@sizeProgress": {
+    "placeholders": {
+      "sent": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      }
+    }
+  },
+
+  "appDescription": "Hoozz Play is a personal open source project where all the fun things will be shared",
+  "downloadingUpdate": "Downloading update",
+  "allowInstallUnknownApps": "Allow \"Install unknown apps\" for Hoozz Play, then try again",
+  "installFailed": "Install failed, try again",
+  "downloadCancelled": "Download cancelled",
+
+  "onlineState": "Online",
+  "offlineState": "Offline",
+  "portProtocol": "port: {port}  |  protocol: {protocol}",
+  "@portProtocol": {
+    "placeholders": {
+      "port": {
+        "type": "String"
+      },
+      "protocol": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteConfigConfirm": "Are you sure you want to delete this config?",
+  "clipboardEmpty": "Clipboard is empty",
+  "addConfigFromClipboard": "Add config from clipboard ...",
+  "contentFormatError": "Content format error",
+  "operationCanceled": "Operation canceled",
+  "errorPrefix": "Error: {error}",
+  "@errorPrefix": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "addConfigFromFile": "Add config from file ...",
+
+  "abnormalDeviceData": "Abnormal device data",
+  "deviceConnectionFailed": "Device connection failed",
+  "deviceConnecting": "Device connecting...",
+  "verifyingDevice": "Verifying device...",
+  "deviceInformationSaved": "Device information saved",
+  "configureDeviceFailed": "Failed to configure device information",
+  "deviceSaved": "Device saved",
+
+  "noData": "No data",
+  "unsupported": "Unsupported",
+
+  "selectAllOrDeselectAll": "Select All or Deselect All",
+  "selectAll": "Select All",
+  "deselectAll": "Deselect All",
+  "noDevicesSelected": "No devices have been selected",
+  "changelist": "Changelist",
+  "sync": "Sync",
+
+  "setSwitchStateFailed": "Set switch state failed",
+  "voltage": "Voltage",
+  "current": "Current",
+  "power": "Power",
+  "energy": "Energy",
+
+  "deletingKeys": "Deleting {count} keys...",
+  "@deletingKeys": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "removedKeys": "Removed {count} keys",
+  "@removedKeys": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "removedKeysPartial": "Removed {ok}/{count} keys",
+  "@removedKeysPartial": {
+    "placeholders": {
+      "ok": {
+        "type": "int"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "deleteFailed": "Delete failed",
+  "keyNameTooLong": "Key name too long",
+  "readFileFailed": "Read file failed",
+  "keyDataSizeInvalid": "Key data must be 1-1024 bytes",
+  "importingFiles": "Importing {count} files...",
+  "@importingFiles": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "importedKeys": "Imported {count} keys",
+  "@importedKeys": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "importedKeysPartial": "Imported {ok}/{count} keys",
+  "@importedKeysPartial": {
+    "placeholders": {
+      "ok": {
+        "type": "int"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "importFailed": "Import failed",
+  "exportingKeys": "Exporting {count} keys...",
+  "@exportingKeys": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "savedTo": "Saved: {folder}",
+  "@savedTo": {
+    "placeholders": {
+      "folder": {
+        "type": "String"
+      }
+    }
+  },
+  "exportedKeysPartial": "Exported {ok}/{count} keys",
+  "@exportedKeysPartial": {
+    "placeholders": {
+      "ok": {
+        "type": "int"
+      },
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "exportFailed": "Export failed",
+  "selectKeysFirst": "Select keys first",
+  "importKeys": "Import keys",
+  "exportSelectedKeys": "Export selected keys",
+  "deleteSelectedKeys": "Delete selected keys",
+  "keyTransferMode": "Key transfer mode",
+  "exitTransferMode": "Exit transfer mode",
+  "deleteKeysConfirm": "Are you sure you want to delete the selected {count} keys?",
+  "@deleteKeysConfirm": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "addKey": "Add key",
+  "irDataFormat": "{count} | {length}p",
+  "@irDataFormat": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      },
+      "length": {
+        "type": "String"
+      }
+    }
+  },
+  "irDataEmpty": "--- | ---p",
+  "enterKeyName": "Enter key name",
+  "saved": "Saved",
+  "saveFailed": "Save failed",
+  "sendFailed": "Send failed"
+}

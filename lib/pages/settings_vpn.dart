@@ -12,6 +12,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:hoozz_play/core/simple_snackbar.dart';
 import "package:hoozz_play/themes/theme.dart";
 import 'package:hoozz_play/core/vpn_ctrl.dart';
+import 'package:hoozz_play/l10n/app_localizations.dart';
 
 class HoozzPlayVPNPage extends StatefulWidget {
   const HoozzPlayVPNPage({super.key});
@@ -114,6 +115,8 @@ class _HoozzPlayVPNPageState extends State<HoozzPlayVPNPage> {
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       appBar: AppBar(title: Text(widget.title)),
       body: SingleChildScrollView(
@@ -142,7 +145,7 @@ class _HoozzPlayVPNPageState extends State<HoozzPlayVPNPage> {
                         TableRow(
                           children: [
                             _generateTableCell(
-                              _online ? 'Online' : 'Offline',
+                              _online ? l10n.onlineState : l10n.offlineState,
                               24,
                             ),
                             _generateTableCell(_duration, 18),
@@ -206,7 +209,8 @@ class _HoozzPlayVPNPageState extends State<HoozzPlayVPNPage> {
                                   ),
                                 ),
                                 Text(
-                                  'port:$_remotePort  |  protocol:$_remoteProtocol',
+                                  l10n.portProtocol(
+                                      '$_remotePort', '$_remoteProtocol'),
                                   textAlign: TextAlign.left,
                                   style: TextStyle(
                                     color: Colors.grey,
@@ -245,14 +249,14 @@ class _HoozzPlayVPNPageState extends State<HoozzPlayVPNPage> {
                                 context: context,
                                 builder: (context) {
                                   return AlertDialog(
-                                    title: const Text('Warning'),
-                                    content: const Text(
-                                      'Are you sure you want to delete this config?',
-                                      style: TextStyle(color: Colors.red),
+                                    title: Text(AppLocalizations.of(context)!.warning),
+                                    content: Text(
+                                      AppLocalizations.of(context)!.deleteConfigConfirm,
+                                      style: const TextStyle(color: Colors.red),
                                     ),
                                     actions: <Widget>[
                                       TextButton(
-                                        child: const Text('Yes'),
+                                        child: Text(AppLocalizations.of(context)!.yes),
                                         onPressed: () {
                                           VPNCtrl.clearConfig();
                                           VPNCtrl.removeConfig();
@@ -260,9 +264,9 @@ class _HoozzPlayVPNPageState extends State<HoozzPlayVPNPage> {
                                         },
                                       ),
                                       TextButton(
-                                        child: const Text(
-                                          'No',
-                                          style: TextStyle(color: Colors.black),
+                                        child: Text(
+                                          AppLocalizations.of(context)!.no,
+                                          style: const TextStyle(color: Colors.black),
                                         ),
                                         onPressed: () =>
                                             Navigator.of(context).pop(),
@@ -294,14 +298,14 @@ class _HoozzPlayVPNPageState extends State<HoozzPlayVPNPage> {
                                 SimpleSnackBar.show(
                                   // ignore: use_build_context_synchronously
                                   context,
-                                  'Added successfully',
+                                  AppLocalizations.of(context)!.addedSuccessfully,
                                   Colors.green,
                                 );
                               } else {
                                 SimpleSnackBar.show(
                                   // ignore: use_build_context_synchronously
                                   context,
-                                  'Content format error',
+                                  AppLocalizations.of(context)!.contentFormatError,
                                   Colors.red,
                                 );
                               }
@@ -309,13 +313,13 @@ class _HoozzPlayVPNPageState extends State<HoozzPlayVPNPage> {
                               SimpleSnackBar.show(
                                 // ignore: use_build_context_synchronously
                                 context,
-                                'Clipboard is empty',
+                                AppLocalizations.of(context)!.clipboardEmpty,
                                 Colors.red,
                               );
                             }
                           },
                           child: Text(
-                            'Add config from clipboard ...',
+                            l10n.addConfigFromClipboard,
                             textAlign: TextAlign.center,
                             style: const TextStyle(
                               fontSize: 14,
@@ -344,14 +348,14 @@ class _HoozzPlayVPNPageState extends State<HoozzPlayVPNPage> {
                                   SimpleSnackBar.show(
                                     // ignore: use_build_context_synchronously
                                     context,
-                                    'Added successfully',
+                                    AppLocalizations.of(context)!.addedSuccessfully,
                                     Colors.green,
                                   );
                                 } else {
                                   SimpleSnackBar.show(
                                     // ignore: use_build_context_synchronously
                                     context,
-                                    'Content format error',
+                                    AppLocalizations.of(context)!.contentFormatError,
                                     Colors.red,
                                   );
                                 }
@@ -359,7 +363,7 @@ class _HoozzPlayVPNPageState extends State<HoozzPlayVPNPage> {
                                 SimpleSnackBar.show(
                                   // ignore: use_build_context_synchronously
                                   context,
-                                  'Operation canceled',
+                                  AppLocalizations.of(context)!.operationCanceled,
                                   Colors.deepOrange,
                                 );
                               }
@@ -368,13 +372,13 @@ class _HoozzPlayVPNPageState extends State<HoozzPlayVPNPage> {
                               SimpleSnackBar.show(
                                 // ignore: use_build_context_synchronously
                                 context,
-                                'Error: $e',
+                                AppLocalizations.of(context)!.errorPrefix('$e'),
                                 Colors.red,
                               );
                             }
                           },
                           child: Text(
-                            'Add config from file ...',
+                            l10n.addConfigFromFile,
                             textAlign: TextAlign.center,
                             style: const TextStyle(
                               fontSize: 14,

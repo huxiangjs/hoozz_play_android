@@ -31,6 +31,15 @@ dependencies:
   flutter:
     sdk: flutter
 
+  # Internationalization (official Flutter approach): localized material
+  # widgets + the intl message library. The app strings live in
+  # lib/l10n/*.arb and are generated into lib/l10n/app_localizations.dart
+  # (see l10n.yaml and `generate: true` below).
+  flutter_localizations:
+    sdk: flutter
+
+  intl: any
+
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
@@ -80,6 +89,10 @@ dev_dependencies:
 
 # The following section is specific to Flutter packages.
 flutter:
+
+  # Generate the localizations (AppLocalizations) from lib/l10n/*.arb
+  # (see l10n.yaml) as part of `flutter pub get` / the build.
+  generate: true
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in

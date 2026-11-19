@@ -16,6 +16,7 @@ import 'package:hoozz_play/core/github/github_download.dart';
 import 'package:hoozz_play/core/github/github_release.dart';
 import 'package:hoozz_play/core/simple_snackbar.dart';
 import 'package:hoozz_play/themes/theme.dart';
+import 'package:hoozz_play/l10n/app_localizations.dart';
 
 const String _logName = 'About';
 
@@ -47,8 +48,6 @@ class _RedDot extends StatelessWidget {
 class HoozzPlayAboutPage extends StatefulWidget {
   const HoozzPlayAboutPage({super.key});
 
-  final String title = 'About';
-
   @override
   State<HoozzPlayAboutPage> createState() => _HoozzPlayAboutPageState();
 }
@@ -60,8 +59,6 @@ class _HoozzPlayAboutPageState extends State<HoozzPlayAboutPage>
   String _appName = '';
   String _version = '';
   String _gitHash = '';
-  final String _description =
-      'Hoozz Play is a personal open source project where all the fun things will be shared';
   final String _githubUrl = 'https://github.com/huxiangjs/hoozz_play.git';
 
   /* Update state */
@@ -109,7 +106,7 @@ class _HoozzPlayAboutPageState extends State<HoozzPlayAboutPage>
       if (mounted) {
         SimpleSnackBar.show(
           context,
-          'Allow "Install unknown apps" for Hoozz Play, then try again',
+          AppLocalizations.of(context)!.allowInstallUnknownApps,
           Colors.red,
         );
       }
@@ -118,7 +115,7 @@ class _HoozzPlayAboutPageState extends State<HoozzPlayAboutPage>
 
     bool launched = await _installApk(path);
     if (mounted && !launched) {
-      SimpleSnackBar.show(context, 'Install failed, try again', Colors.red);
+      SimpleSnackBar.show(context, AppLocalizations.of(context)!.installFailed, Colors.red);
     }
   }
 
@@ -224,9 +221,9 @@ class _HoozzPlayAboutPageState extends State<HoozzPlayAboutPage>
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text(
-            'Update available',
-            style: TextStyle(fontFamily: subFontFamily),
+          title: Text(
+            AppLocalizations.of(context)!.updateAvailable,
+            style: const TextStyle(fontFamily: subFontFamily),
           ),
           content: SizedBox(
             width: double.maxFinite,
@@ -236,7 +233,7 @@ class _HoozzPlayAboutPageState extends State<HoozzPlayAboutPage>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Version: ${release.tag}',
+                    AppLocalizations.of(context)!.versionLine(release.tag),
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -245,7 +242,8 @@ class _HoozzPlayAboutPageState extends State<HoozzPlayAboutPage>
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Published: ${_formatPublishTime(release.publishedAt)}',
+                    AppLocalizations.of(context)!.publishedLine(
+                        _formatPublishTime(release.publishedAt)),
                     style: const TextStyle(
                       fontSize: 14,
                       color: Colors.grey,
@@ -263,7 +261,8 @@ class _HoozzPlayAboutPageState extends State<HoozzPlayAboutPage>
                   const SizedBox(height: 10),
                   if (asset != null)
                     Text(
-                      'Download: ${asset.name} (${_formatSize(asset.size)})',
+                      AppLocalizations.of(context)!.downloadLine(
+                          asset.name, _formatSize(asset.size)),
                       style: const TextStyle(
                         fontSize: 13,
                         color: Colors.grey,
@@ -277,9 +276,9 @@ class _HoozzPlayAboutPageState extends State<HoozzPlayAboutPage>
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text(
-                'Cancel',
-                style: TextStyle(fontFamily: subFontFamily),
+              child: Text(
+                AppLocalizations.of(context)!.cancel,
+                style: const TextStyle(fontFamily: subFontFamily),
               ),
             ),
             ElevatedButton(
@@ -287,9 +286,9 @@ class _HoozzPlayAboutPageState extends State<HoozzPlayAboutPage>
                 Navigator.of(context).pop();
                 _update(release);
               },
-              child: const Text(
-                'Update',
-                style: TextStyle(fontFamily: subFontFamily),
+              child: Text(
+                AppLocalizations.of(context)!.update,
+                style: const TextStyle(fontFamily: subFontFamily),
               ),
             ),
           ],
@@ -345,7 +344,7 @@ class _HoozzPlayAboutPageState extends State<HoozzPlayAboutPage>
         return WillPopScope(
           onWillPop: () async => false, // Disable return key
           child: AlertDialog(
-            title: const Text('Downloading update'),
+            title: Text(AppLocalizations.of(context)!.downloadingUpdate),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -379,7 +378,7 @@ class _HoozzPlayAboutPageState extends State<HoozzPlayAboutPage>
                   cancelToken.cancel();
                   closeProgressDialog();
                 },
-                child: const Text('Cancel'),
+                child: Text(AppLocalizations.of(context)!.cancel),
               ),
             ],
           ),
@@ -417,20 +416,22 @@ class _HoozzPlayAboutPageState extends State<HoozzPlayAboutPage>
         _pendingApkPath = file.path;
         SimpleSnackBar.show(
           context,
-          'Allow "Install unknown apps" for Hoozz Play, then try again',
+          AppLocalizations.of(context)!.allowInstallUnknownApps,
           Colors.red,
         );
       }
     } on DownloadCancelledException {
       await ensureDialogClosed();
       if (mounted) {
-        SimpleSnackBar.show(context, 'Download cancelled', Colors.grey);
+        SimpleSnackBar.show(context, AppLocalizations.of(context)!.downloadCancelled, Colors.grey);
       }
     } catch (e) {
       developer.log('Download update failed: $e', name: _logName);
       await ensureDialogClosed();
       if (mounted) {
-        SimpleSnackBar.show(context, 'Download failed: $e', Colors.red);
+        SimpleSnackBar.show(
+            context, AppLocalizations.of(context)!.downloadFailed('$e'),
+            Colors.red);
       }
     }
   }
@@ -463,9 +464,11 @@ class _HoozzPlayAboutPageState extends State<HoozzPlayAboutPage>
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.title),
+        title: Text(l10n.about),
       ),
       body: SingleChildScrollView(
         scrollDirection: Axis.vertical,
@@ -500,7 +503,7 @@ class _HoozzPlayAboutPageState extends State<HoozzPlayAboutPage>
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    'Version: $_version/$_gitHash',
+                    l10n.versionLine('$_version/$_gitHash'),
                     style: const TextStyle(fontSize: 18, color: Colors.grey),
                   ),
                   if (_checking)
@@ -529,7 +532,7 @@ class _HoozzPlayAboutPageState extends State<HoozzPlayAboutPage>
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Text(
-                _description,
+                l10n.appDescription,
                 style: const TextStyle(fontSize: 16),
                 textAlign: TextAlign.center,
               ),
