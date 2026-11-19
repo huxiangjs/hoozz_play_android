@@ -2,7 +2,7 @@
 
 <div align="center">
   <a href="./README.md"><img src="https://img.shields.io/badge/README-English-2ea44f?style=for-the-badge" alt="English README"></a>
-  <a href="./README.zh.md"><img src="https://img.shields.io/badge/README-%E4%B8%AD%E6%96%87-d3333f?style=for-the-badge" alt="中文 README"></a>
+  <a href="./README_zh.md"><img src="https://img.shields.io/badge/README-%E4%B8%AD%E6%96%87-d3333f?style=for-the-badge" alt="中文 README"></a>
 </div>
 
 Hoozz Play 是一款有趣的安卓应用，所有支持的硬件设备都可以在其中使用。
