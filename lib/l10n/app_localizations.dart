@@ -179,7 +179,7 @@ abstract class AppLocalizations {
   /// No description provided for @toolsEspTouchDesc.
   ///
   /// In en, this message translates to:
-  /// **'Smart configuration network'**
+  /// **'Smart-config the network'**
   String get toolsEspTouchDesc;
 
   /// No description provided for @toolsDiscoverDesc.
@@ -347,7 +347,7 @@ abstract class AppLocalizations {
   /// No description provided for @nickName.
   ///
   /// In en, this message translates to:
-  /// **'Nick name'**
+  /// **'Nickname'**
   String get nickName;
 
   /// No description provided for @nickNameHint.
@@ -407,13 +407,13 @@ abstract class AppLocalizations {
   /// No description provided for @callingDevice.
   ///
   /// In en, this message translates to:
-  /// **'Calling device...'**
+  /// **'Connecting to device...'**
   String get callingDevice;
 
   /// No description provided for @waitResult.
   ///
   /// In en, this message translates to:
-  /// **'Wait result...'**
+  /// **'Waiting for result...'**
   String get waitResult;
 
   /// No description provided for @stateLabel.
@@ -449,7 +449,7 @@ abstract class AppLocalizations {
   /// No description provided for @errorSettingRefreshRate.
   ///
   /// In en, this message translates to:
-  /// **'Error setting refresh rate set to {rate}Hz'**
+  /// **'Failed to set refresh rate to {rate}Hz'**
   String errorSettingRefreshRate(String rate);
 
   /// No description provided for @connectionSucceeded.
@@ -527,7 +527,7 @@ abstract class AppLocalizations {
   /// No description provided for @errorSettingEmissivity.
   ///
   /// In en, this message translates to:
-  /// **'Error setting emissivity set to {value}'**
+  /// **'Failed to set emissivity to {value}'**
   String errorSettingEmissivity(String value);
 
   /// No description provided for @taShiftLabel.
@@ -539,7 +539,7 @@ abstract class AppLocalizations {
   /// No description provided for @errorSettingTaShift.
   ///
   /// In en, this message translates to:
-  /// **'Error setting Ta shift set to {value}'**
+  /// **'Failed to set Ta shift to {value}'**
   String errorSettingTaShift(String value);
 
   /// No description provided for @screenshot.
@@ -611,13 +611,13 @@ abstract class AppLocalizations {
   /// No description provided for @deviceNickName.
   ///
   /// In en, this message translates to:
-  /// **'Device nick name'**
+  /// **'Device nickname'**
   String get deviceNickName;
 
   /// No description provided for @deviceNickNameHint.
   ///
   /// In en, this message translates to:
-  /// **'Set a nick name for your device'**
+  /// **'Set a nickname for your device'**
   String get deviceNickNameHint;
 
   /// No description provided for @accessKey.
@@ -629,7 +629,7 @@ abstract class AppLocalizations {
   /// No description provided for @accessKeyHint.
   ///
   /// In en, this message translates to:
-  /// **'Set access key for your device'**
+  /// **'Set an access key for your device'**
   String get accessKeyHint;
 
   /// No description provided for @syncNameToRemote.
@@ -677,7 +677,7 @@ abstract class AppLocalizations {
   /// No description provided for @extractFirmwareFailed.
   ///
   /// In en, this message translates to:
-  /// **'Extract firmware failed: {error}'**
+  /// **'Failed to extract firmware: {error}'**
   String extractFirmwareFailed(String error);
 
   /// No description provided for @otaTransferFailed.
@@ -905,7 +905,7 @@ abstract class AppLocalizations {
   /// No description provided for @setSwitchStateFailed.
   ///
   /// In en, this message translates to:
-  /// **'Set switch state failed'**
+  /// **'Failed to set switch state'**
   String get setSwitchStateFailed;
 
   /// No description provided for @voltage.
@@ -965,7 +965,7 @@ abstract class AppLocalizations {
   /// No description provided for @readFileFailed.
   ///
   /// In en, this message translates to:
-  /// **'Read file failed'**
+  /// **'Failed to read file'**
   String get readFileFailed;
 
   /// No description provided for @keyDataSizeInvalid.

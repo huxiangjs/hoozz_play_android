@@ -48,7 +48,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get languageChinese => 'Chinese';
 
   @override
-  String get toolsEspTouchDesc => 'Smart configuration network';
+  String get toolsEspTouchDesc => 'Smart-config the network';
 
   @override
   String get toolsDiscoverDesc => 'Discover configured devices';
@@ -135,7 +135,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addNewDevice => 'Add new device';
 
   @override
-  String get nickName => 'Nick name';
+  String get nickName => 'Nickname';
 
   @override
   String get nickNameHint => 'Give your device a name';
@@ -166,10 +166,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get deviceInit => 'Device Init...';
 
   @override
-  String get callingDevice => 'Calling device...';
+  String get callingDevice => 'Connecting to device...';
 
   @override
-  String get waitResult => 'Wait result...';
+  String get waitResult => 'Waiting for result...';
 
   @override
   String stateLabel(String state) {
@@ -190,7 +190,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String errorSettingRefreshRate(String rate) {
-    return 'Error setting refresh rate set to ${rate}Hz';
+    return 'Failed to set refresh rate to ${rate}Hz';
   }
 
   @override
@@ -243,7 +243,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String errorSettingEmissivity(String value) {
-    return 'Error setting emissivity set to $value';
+    return 'Failed to set emissivity to $value';
   }
 
   @override
@@ -251,7 +251,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String errorSettingTaShift(String value) {
-    return 'Error setting Ta shift set to $value';
+    return 'Failed to set Ta shift to $value';
   }
 
   @override
@@ -289,16 +289,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get restartRequestFailed => 'Restart request failed';
 
   @override
-  String get deviceNickName => 'Device nick name';
+  String get deviceNickName => 'Device nickname';
 
   @override
-  String get deviceNickNameHint => 'Set a nick name for your device';
+  String get deviceNickNameHint => 'Set a nickname for your device';
 
   @override
   String get accessKey => 'Access key';
 
   @override
-  String get accessKeyHint => 'Set access key for your device';
+  String get accessKeyHint => 'Set an access key for your device';
 
   @override
   String get syncNameToRemote => 'Sync name to remote';
@@ -331,7 +331,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String extractFirmwareFailed(String error) {
-    return 'Extract firmware failed: $error';
+    return 'Failed to extract firmware: $error';
   }
 
   @override
@@ -459,7 +459,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sync => 'Sync';
 
   @override
-  String get setSwitchStateFailed => 'Set switch state failed';
+  String get setSwitchStateFailed => 'Failed to set switch state';
 
   @override
   String get voltage => 'Voltage';
@@ -495,7 +495,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get keyNameTooLong => 'Key name too long';
 
   @override
-  String get readFileFailed => 'Read file failed';
+  String get readFileFailed => 'Failed to read file';
 
   @override
   String get keyDataSizeInvalid => 'Key data must be 1-1024 bytes';

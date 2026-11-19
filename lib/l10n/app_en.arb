@@ -15,7 +15,7 @@
   "languageEnglish": "English",
   "languageChinese": "Chinese",
 
-  "toolsEspTouchDesc": "Smart configuration network",
+  "toolsEspTouchDesc": "Smart-config the network",
   "toolsDiscoverDesc": "Discover configured devices",
 
   "ssid": "SSID",
@@ -54,7 +54,7 @@
   },
 
   "addNewDevice": "Add new device",
-  "nickName": "Nick name",
+  "nickName": "Nickname",
   "nickNameHint": "Give your device a name",
   "repository": "Repository",
   "repositoryHint": "Enter the device repository URL",
@@ -64,8 +64,8 @@
   "addedSuccessfully": "Added successfully",
   "verificationFailed": "Verification failed",
   "deviceInit": "Device Init...",
-  "callingDevice": "Calling device...",
-  "waitResult": "Wait result...",
+  "callingDevice": "Connecting to device...",
+  "waitResult": "Waiting for result...",
   "stateLabel": "State: {state}",
   "@stateLabel": {
     "placeholders": {
@@ -79,7 +79,7 @@
   "unknown": "Unknown",
   "clickMe": "Click Me",
 
-  "errorSettingRefreshRate": "Error setting refresh rate set to {rate}Hz",
+  "errorSettingRefreshRate": "Failed to set refresh rate to {rate}Hz",
   "@errorSettingRefreshRate": {
     "placeholders": {
       "rate": {
@@ -141,7 +141,7 @@
   "traceLabel": "Trace:",
   "mirrorLabel": "Mirror:",
   "emissivityLabel": "Emissivity:",
-  "errorSettingEmissivity": "Error setting emissivity set to {value}",
+  "errorSettingEmissivity": "Failed to set emissivity to {value}",
   "@errorSettingEmissivity": {
     "placeholders": {
       "value": {
@@ -150,7 +150,7 @@
     }
   },
   "taShiftLabel": "Ta shift:",
-  "errorSettingTaShift": "Error setting Ta shift set to {value}",
+  "errorSettingTaShift": "Failed to set Ta shift to {value}",
   "@errorSettingTaShift": {
     "placeholders": {
       "value": {
@@ -170,10 +170,10 @@
   "restartDeviceConfirm": "The device will restart shortly and may be unreachable for a while. Continue?",
   "deviceIsRestarting": "Device is restarting",
   "restartRequestFailed": "Restart request failed",
-  "deviceNickName": "Device nick name",
-  "deviceNickNameHint": "Set a nick name for your device",
+  "deviceNickName": "Device nickname",
+  "deviceNickNameHint": "Set a nickname for your device",
   "accessKey": "Access key",
-  "accessKeyHint": "Set access key for your device",
+  "accessKeyHint": "Set an access key for your device",
   "syncNameToRemote": "Sync name to remote",
 
   "updateAvailable": "Update available",
@@ -213,7 +213,7 @@
       }
     }
   },
-  "extractFirmwareFailed": "Extract firmware failed: {error}",
+  "extractFirmwareFailed": "Failed to extract firmware: {error}",
   "@extractFirmwareFailed": {
     "placeholders": {
       "error": {
@@ -311,7 +311,7 @@
   "changelist": "Changelist",
   "sync": "Sync",
 
-  "setSwitchStateFailed": "Set switch state failed",
+  "setSwitchStateFailed": "Failed to set switch state",
   "voltage": "Voltage",
   "current": "Current",
   "power": "Power",
@@ -346,7 +346,7 @@
   },
   "deleteFailed": "Delete failed",
   "keyNameTooLong": "Key name too long",
-  "readFileFailed": "Read file failed",
+  "readFileFailed": "Failed to read file",
   "keyDataSizeInvalid": "Key data must be 1-1024 bytes",
   "importingFiles": "Importing {count} files...",
   "@importingFiles": {
