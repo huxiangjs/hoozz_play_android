@@ -7,6 +7,7 @@
 import 'package:flutter/material.dart';
 import 'package:hoozz_play/themes/theme.dart';
 import 'package:hoozz_play/adapter/remote_switch_adapter.dart';
+import 'package:hoozz_play/l10n/app_localizations.dart';
 import 'dart:developer' as developer;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -66,9 +67,11 @@ class _AddDevicePageWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Add new device"),
+        title: Text(l10n.addNewDevice),
       ),
       body: SingleChildScrollView(
         scrollDirection: Axis.vertical,
@@ -82,8 +85,8 @@ class _AddDevicePageWidget extends StatelessWidget {
                 autofocus: true,
                 style: const TextStyle(fontSize: 20, fontFamily: subFontFamily),
                 decoration: _DeviceInofInputDecoration(
-                  'Nick name',
-                  'Give your device a name',
+                  l10n.nickName,
+                  l10n.nickNameHint,
                 ),
               ),
             ),
@@ -94,8 +97,8 @@ class _AddDevicePageWidget extends StatelessWidget {
                     _repository = value.replaceAll('\r\n', '\n'),
                 style: const TextStyle(fontSize: 20, fontFamily: subFontFamily),
                 decoration: _DeviceInofInputDecoration(
-                  'Repository',
-                  'Enter the device repository URL',
+                  l10n.repository,
+                  l10n.repositoryHint,
                 ),
               ),
             ),
@@ -107,8 +110,8 @@ class _AddDevicePageWidget extends StatelessWidget {
                 maxLines: 10,
                 keyboardType: TextInputType.multiline,
                 decoration: _DeviceInofInputDecoration(
-                  'Private key',
-                  'Enter your private key to access the repository',
+                  l10n.privateKey,
+                  l10n.privateKeyHint,
                 ),
               ),
             ),
@@ -132,11 +135,11 @@ class _AddDevicePageWidget extends StatelessWidget {
                         child: AlertDialog(
                           content: Column(
                             mainAxisSize: MainAxisSize.min,
-                            children: const <Widget>[
-                              CircularProgressIndicator(),
+                            children: <Widget>[
+                              const CircularProgressIndicator(),
                               Padding(
-                                padding: EdgeInsets.only(top: 26.0),
-                                child: Text("Please wait..."),
+                                padding: const EdgeInsets.only(top: 26.0),
+                                child: Text(l10n.pleaseWait),
                               )
                             ],
                           ),
@@ -149,20 +152,18 @@ class _AddDevicePageWidget extends StatelessWidget {
                     (value) {
                       Navigator.pop(context);
                       if (value == 0) {
-                        _generateSnackBar(
-                            context, 'Added successfully', Colors.green);
+                        _generateSnackBar(context, l10n.addedSuccessfully, Colors.green);
                         Navigator.pop(
                             context, [_nickName, _repository, _privkey]);
                       } else {
-                        _generateSnackBar(
-                            context, 'Verification failed', Colors.red);
+                        _generateSnackBar(context, l10n.verificationFailed, Colors.red);
                       }
                     },
                   );
                 },
-                child: const Text(
-                  "Save",
-                  style: TextStyle(fontSize: 20, fontFamily: subFontFamily),
+                child: Text(
+                  l10n.save,
+                  style: const TextStyle(fontSize: 20, fontFamily: subFontFamily),
                 ),
               ),
             ),
@@ -197,7 +198,7 @@ class _CtrlDevicePageState extends State<_CtrlDevicePageWidget> {
     if (_runing) return false;
 
     setState(() {
-      _stepState = 'Device Init...';
+      _stepState = AppLocalizations.of(context)!.deviceInit;
       _runing = true;
     });
 
@@ -224,12 +225,12 @@ class _CtrlDevicePageState extends State<_CtrlDevicePageWidget> {
     }
 
     setState(() {
-      _stepState = 'Calling device...';
+      _stepState = AppLocalizations.of(context)!.callingDevice;
       _runing = true;
     });
 
     if (await remoteSwitchReport() == 0) {
-      setState(() => _stepState = 'Wait result...');
+      setState(() => _stepState = AppLocalizations.of(context)!.waitResult);
       _devPowerState = await remoteSwitchResult(15);
       retval = true;
     }
@@ -252,12 +253,12 @@ class _CtrlDevicePageState extends State<_CtrlDevicePageWidget> {
     }
 
     setState(() {
-      _stepState = 'Calling device...';
+      _stepState = AppLocalizations.of(context)!.callingDevice;
       _runing = true;
     });
 
     if (await remoteSwitchPress() == 0) {
-      setState(() => _stepState = 'Wait result...');
+      setState(() => _stepState = AppLocalizations.of(context)!.waitResult);
       _devPowerState = await remoteSwitchResult(30);
       retval = true;
     }
@@ -278,6 +279,8 @@ class _CtrlDevicePageState extends State<_CtrlDevicePageWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
+
     return Scaffold(
       appBar: AppBar(
         title: Text(widget._nickName),
@@ -309,7 +312,13 @@ class _CtrlDevicePageState extends State<_CtrlDevicePageWidget> {
                 Padding(
                   padding: const EdgeInsets.fromLTRB(10, 24, 10, 24),
                   child: Text(
-                    'State: ${_devPowerState == 1 ? 'ON' : (_devPowerState == 0 ? 'OFF' : 'Unknown')}',
+                    l10n.stateLabel(
+                      _devPowerState == 1
+                          ? l10n.onState
+                          : (_devPowerState == 0
+                              ? l10n.offState
+                              : l10n.unknown),
+                    ),
                     style: TextStyle(
                         fontSize: 32,
                         color: _devPowerState == 1
@@ -338,9 +347,9 @@ class _CtrlDevicePageState extends State<_CtrlDevicePageWidget> {
                               _ctrlDevice();
                             }
                           : null,
-                      child: const Text(
-                        "Click Me",
-                        style: TextStyle(fontSize: 20),
+                      child: Text(
+                        l10n.clickMe,
+                        style: const TextStyle(fontSize: 20),
                       ),
                     ),
                   ],
@@ -399,14 +408,14 @@ class _RemoteSwitchHomePageState extends State<RemoteSwitchHomePage> {
           context: context,
           builder: (context) {
             return AlertDialog(
-              title: const Text('Warning'),
-              content: const Text(
-                  'Are you sure you want to delete this device?',
-                  style: TextStyle(color: Colors.red)),
+              title: Text(AppLocalizations.of(context)!.warning),
+              content: Text(
+                  AppLocalizations.of(context)!.deleteDeviceConfirm,
+                  style: const TextStyle(color: Colors.red)),
               actions: <Widget>[
                 // Delete device button
                 TextButton(
-                  child: const Text('Yes'),
+                  child: Text(AppLocalizations.of(context)!.yes),
                   onPressed: () {
                     setState(() {
                       _deviceList.removeAt(index);
@@ -417,7 +426,7 @@ class _RemoteSwitchHomePageState extends State<RemoteSwitchHomePage> {
                 ),
                 TextButton(
                   child:
-                      const Text('No', style: TextStyle(color: Colors.black)),
+                      Text(AppLocalizations.of(context)!.no, style: const TextStyle(color: Colors.black)),
                   onPressed: () {
                     Navigator.of(context).pop(true);
                   },

@@ -15,6 +15,7 @@ import 'package:hoozz_play/core/simple_showdialog.dart';
 import 'package:hoozz_play/core/simple_ctrl.dart';
 import 'package:hoozz_play/core/device_storage.dart';
 import 'package:hoozz_play/core/simple_snackbar.dart';
+import 'package:hoozz_play/l10n/app_localizations.dart';
 import 'dart:developer' as developer;
 
 import 'package:hoozz_play/themes/theme.dart';
@@ -123,7 +124,9 @@ class PwdSyncDeviceCtrlPageState extends ParameterStatefulState {
             context,
             (route) => route.settings.name == '/pwd_sync',
           );
-          SimpleSnackBar.show(context, 'Abnormal device data', Colors.red);
+          SimpleSnackBar.show(
+              context, AppLocalizations.of(context)!.abnormalDeviceData,
+              Colors.red);
         }
       });
 
@@ -140,7 +143,9 @@ class PwdSyncDeviceCtrlPageState extends ParameterStatefulState {
             context,
             (route) => route.settings.name == '/pwd_sync',
           );
-          SimpleSnackBar.show(context, 'Device connection failed', Colors.red);
+          SimpleSnackBar.show(
+              context, AppLocalizations.of(context)!.deviceConnectionFailed,
+              Colors.red);
         }
       });
     }
@@ -282,7 +287,7 @@ class PwdSyncDeviceCtrlPageState extends ParameterStatefulState {
             return;
           }
           _connectingDialog = true;
-          SimpleShowDialog.show(context, 'Device connecting...');
+          SimpleShowDialog.show(context, AppLocalizations.of(context)!.deviceConnecting);
         },
       );
     }
@@ -382,21 +387,26 @@ class PwdSyncDeviceCtrlPageState extends ParameterStatefulState {
                         context: context,
                         builder: (context) {
                           return AlertDialog(
-                            title: const Text('Select'),
-                            content: const Text(
-                              'Select All or Deselect All',
+                            title: Text(AppLocalizations.of(context)!.select),
+                            content: Text(
+                              AppLocalizations.of(context)!
+                                  .selectAllOrDeselectAll,
                               style: textStyle,
                             ),
                             actions: <Widget>[
                               TextButton(
                                 onPressed: () =>
                                     Navigator.of(context).pop(true),
-                                child: Text('Select All', style: textStyle),
+                                child: Text(
+                                    AppLocalizations.of(context)!.selectAll,
+                                    style: textStyle),
                               ),
                               TextButton(
                                 onPressed: () =>
                                     Navigator.of(context).pop(false),
-                                child: Text('Deselect All', style: textStyle),
+                                child: Text(
+                                    AppLocalizations.of(context)!.deselectAll,
+                                    style: textStyle),
                               ),
                             ],
                           );
@@ -504,7 +514,7 @@ class PwdSyncDeviceCtrlPageState extends ParameterStatefulState {
             if (changelist.isEmpty) {
               SimpleSnackBar.show(
                 context,
-                'No devices have been selected',
+                AppLocalizations.of(context)!.noDevicesSelected,
                 Colors.grey,
               );
               return;
@@ -513,7 +523,7 @@ class PwdSyncDeviceCtrlPageState extends ParameterStatefulState {
               context: context,
               builder: (BuildContext context) {
                 return AlertDialog(
-                  title: const Text('Changelist'),
+                  title: Text(AppLocalizations.of(context)!.changelist),
                   content: ConstrainedBox(
                     constraints: BoxConstraints(
                       maxHeight: MediaQuery.of(context).size.height * 0.6,
@@ -558,11 +568,11 @@ class PwdSyncDeviceCtrlPageState extends ParameterStatefulState {
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.of(context).pop(true),
-                      child: const Text('Start'),
+                      child: Text(AppLocalizations.of(context)!.start),
                     ),
                     TextButton(
                       onPressed: () => Navigator.of(context).pop(false),
-                      child: const Text('Cancel'),
+                      child: Text(AppLocalizations.of(context)!.cancel),
                     ),
                   ],
                 );
@@ -574,7 +584,7 @@ class PwdSyncDeviceCtrlPageState extends ParameterStatefulState {
               }
             });
           },
-          tooltip: 'Sync',
+          tooltip: AppLocalizations.of(context)!.sync,
           child: const Icon(Icons.sync_alt),
         ),
       ),
@@ -629,7 +639,8 @@ class PwdSyncConfigDevicePageState extends ParameterStatefulState {
       infoEdit: _infoEdit,
       onSavePressed: (infoEdit) {
         if (infoEdit.ctrlReady) {
-          SimpleShowDialog.show(context, "Verifying device...");
+          SimpleShowDialog.show(
+              context, AppLocalizations.of(context)!.verifyingDevice);
           Future<bool> result = () async {
             // Set name
             if (infoEdit.syncName) {
@@ -652,14 +663,14 @@ class PwdSyncConfigDevicePageState extends ParameterStatefulState {
               );
               SimpleSnackBar.show(
                 context,
-                'Device information saved',
+                AppLocalizations.of(context)!.deviceInformationSaved,
                 Colors.green,
               );
             } else {
               Navigator.pop(context);
               SimpleSnackBar.show(
                 context,
-                'Failed to configure device information',
+                AppLocalizations.of(context)!.configureDeviceFailed,
                 Colors.red,
               );
             }
@@ -670,7 +681,8 @@ class PwdSyncConfigDevicePageState extends ParameterStatefulState {
           }
           _deviceInfoSave();
           Navigator.pop(context);
-          SimpleSnackBar.show(context, 'Device saved', Colors.green);
+          SimpleSnackBar.show(
+              context, AppLocalizations.of(context)!.deviceSaved, Colors.green);
         }
       },
     );

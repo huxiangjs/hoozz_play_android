@@ -24,6 +24,7 @@ import 'package:hoozz_play/core/ota_update.dart';
 import 'package:hoozz_play/core/simple_ctrl.dart';
 import 'package:hoozz_play/core/simple_snackbar.dart';
 import 'package:hoozz_play/themes/theme.dart';
+import 'package:hoozz_play/l10n/app_localizations.dart';
 
 const String _logName = 'FirmwareVersionRow';
 
@@ -219,9 +220,9 @@ class _FirmwareVersionRowState extends State<FirmwareVersionRow> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text(
-            'Update available',
-            style: TextStyle(fontFamily: subFontFamily),
+          title: Text(
+            AppLocalizations.of(context)!.updateAvailable,
+            style: const TextStyle(fontFamily: subFontFamily),
           ),
           content: SizedBox(
             width: double.maxFinite,
@@ -233,7 +234,8 @@ class _FirmwareVersionRowState extends State<FirmwareVersionRow> {
                   // The tag and the (short) git hash the release is tagged
                   // at, like the "Version: x.y.z/<hash>" of the about page
                   Text(
-                    'Version: ${release.tag}/${_shortHash(release.commitHash)}',
+                    AppLocalizations.of(context)!.versionLine(
+                        '${release.tag}/${_shortHash(release.commitHash)}'),
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -242,7 +244,8 @@ class _FirmwareVersionRowState extends State<FirmwareVersionRow> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    'Published: ${_formatPublishTime(release.publishedAt)}',
+                    AppLocalizations.of(context)!.publishedLine(
+                        _formatPublishTime(release.publishedAt)),
                     style: const TextStyle(
                       fontSize: 14,
                       color: Colors.grey,
@@ -260,7 +263,8 @@ class _FirmwareVersionRowState extends State<FirmwareVersionRow> {
                   const SizedBox(height: 10),
                   if (zipAsset != null)
                     Text(
-                      'Download: ${zipAsset.name} (${_formatSize(zipAsset.size)})',
+                      AppLocalizations.of(context)!.downloadLine(
+                          zipAsset.name, _formatSize(zipAsset.size)),
                       style: const TextStyle(
                         fontSize: 13,
                         color: Colors.grey,
@@ -274,9 +278,9 @@ class _FirmwareVersionRowState extends State<FirmwareVersionRow> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text(
-                'Cancel',
-                style: TextStyle(fontFamily: subFontFamily),
+              child: Text(
+                AppLocalizations.of(context)!.cancel,
+                style: const TextStyle(fontFamily: subFontFamily),
               ),
             ),
             ElevatedButton(
@@ -284,9 +288,9 @@ class _FirmwareVersionRowState extends State<FirmwareVersionRow> {
                 Navigator.of(context).pop();
                 _upgrade(release);
               },
-              child: const Text(
-                'Upgrade',
-                style: TextStyle(fontFamily: subFontFamily),
+              child: Text(
+                AppLocalizations.of(context)!.upgrade,
+                style: const TextStyle(fontFamily: subFontFamily),
               ),
             ),
           ],
@@ -306,7 +310,8 @@ class _FirmwareVersionRowState extends State<FirmwareVersionRow> {
     }
     if (zipAsset == null) {
       if (mounted) {
-        SimpleSnackBar.show(context, 'No firmware zip in the release', Colors.red);
+        SimpleSnackBar.show(
+            context, AppLocalizations.of(context)!.noFirmwareZip, Colors.red);
       }
       return;
     }
@@ -323,7 +328,9 @@ class _FirmwareVersionRowState extends State<FirmwareVersionRow> {
     } catch (e) {
       if (mounted) {
         setState(() => _busy = false);
-        SimpleSnackBar.show(context, 'Download failed: $e', Colors.red);
+        SimpleSnackBar.show(
+            context, AppLocalizations.of(context)!.downloadFailed('$e'),
+            Colors.red);
       }
       return;
     }
@@ -336,7 +343,9 @@ class _FirmwareVersionRowState extends State<FirmwareVersionRow> {
     } catch (e) {
       if (mounted) {
         setState(() => _busy = false);
-        SimpleSnackBar.show(context, 'Extract firmware failed: $e', Colors.red);
+        SimpleSnackBar.show(
+            context, AppLocalizations.of(context)!.extractFirmwareFailed('$e'),
+            Colors.red);
       }
       return;
     }
@@ -350,7 +359,9 @@ class _FirmwareVersionRowState extends State<FirmwareVersionRow> {
     } catch (e) {
       if (mounted) {
         setState(() => _busy = false);
-        SimpleSnackBar.show(context, 'OTA transfer failed: $e', Colors.red);
+        SimpleSnackBar.show(
+            context, AppLocalizations.of(context)!.otaTransferFailed('$e'),
+            Colors.red);
       }
       return;
     }
@@ -405,7 +416,7 @@ class _FirmwareVersionRowState extends State<FirmwareVersionRow> {
         return WillPopScope(
           onWillPop: () async => false,
           child: AlertDialog(
-            title: const Text('Downloading firmware'),
+            title: Text(AppLocalizations.of(context)!.downloadingFirmware),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -439,7 +450,7 @@ class _FirmwareVersionRowState extends State<FirmwareVersionRow> {
                   cancelToken.cancel();
                   closeDialog();
                 },
-                child: const Text('Cancel'),
+                child: Text(AppLocalizations.of(context)!.cancel),
               ),
             ],
           ),
@@ -480,8 +491,8 @@ class _FirmwareVersionRowState extends State<FirmwareVersionRow> {
   ///
   Future<void> _transfer(File fwFile) async {
     final ValueNotifier<double?> progress = ValueNotifier<double?>(0);
-    final ValueNotifier<String> progressText =
-        ValueNotifier<String>('Connecting to device...');
+    final ValueNotifier<String> progressText = ValueNotifier<String>(
+        AppLocalizations.of(context)!.connectingToDevice);
     final OtaCancelToken cancelToken = OtaCancelToken();
     BuildContext? dialogContext;
     final Completer<void> dialogShown = Completer<void>();
@@ -519,7 +530,7 @@ class _FirmwareVersionRowState extends State<FirmwareVersionRow> {
         return WillPopScope(
           onWillPop: () async => false,
           child: AlertDialog(
-            title: const Text('Transferring firmware'),
+            title: Text(AppLocalizations.of(context)!.transferringFirmware),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -562,7 +573,7 @@ class _FirmwareVersionRowState extends State<FirmwareVersionRow> {
                   }
                   closeDialog();
                 },
-                child: const Text('Cancel'),
+                child: Text(AppLocalizations.of(context)!.cancel),
               ),
             ],
           ),
@@ -578,9 +589,10 @@ class _FirmwareVersionRowState extends State<FirmwareVersionRow> {
         onProgress: (sent, total, devicePct) {
           progress.value = total > 0 ? sent / total : null;
           progressText.value = devicePct >= 0
-              ? 'Device: $devicePct%   '
-                  '(${_formatSize(sent)} / ${_formatSize(total)})'
-              : '${_formatSize(sent)} / ${_formatSize(total)}';
+              ? AppLocalizations.of(context)!.transferProgress(
+                  devicePct, _formatSize(sent), _formatSize(total))
+              : AppLocalizations.of(context)!.sizeProgress(
+                  _formatSize(sent), _formatSize(total));
         },
         cancel: cancelToken,
       );
@@ -660,13 +672,13 @@ class _FirmwareVersionRowState extends State<FirmwareVersionRow> {
         return WillPopScope(
           onWillPop: () async => false,
           child: AlertDialog(
-            title: const Text('Device is restarting'),
+            title: Text(AppLocalizations.of(context)!.deviceIsRestarting),
             content: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Text(
-                  'Do not power off the device',
-                  style: TextStyle(fontSize: 14, color: Colors.grey),
+                Text(
+                  AppLocalizations.of(context)!.doNotPowerOff,
+                  style: const TextStyle(fontSize: 14, color: Colors.grey),
                 ),
                 const SizedBox(height: 16),
                 ValueListenableBuilder<int>(
@@ -686,7 +698,7 @@ class _FirmwareVersionRowState extends State<FirmwareVersionRow> {
             actions: [
               TextButton(
                 onPressed: onCancel,
-                child: const Text('Cancel'),
+                child: Text(AppLocalizations.of(context)!.cancel),
               ),
             ],
           ),

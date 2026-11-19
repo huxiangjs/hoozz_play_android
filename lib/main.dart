@@ -6,8 +6,11 @@
 
 import 'package:flutter/material.dart';
 import 'themes/theme.dart';
+import 'core/locale_manager.dart';
+import 'l10n/app_localizations.dart';
 import 'pages/home.dart';
 import 'pages/settings.dart';
+import 'pages/settings_language.dart';
 import 'pages/tools.dart';
 import 'pages/settings_about.dart';
 import 'pages/settings_author.dart';
@@ -21,7 +24,7 @@ import "pages/tools_discover.dart";
 import 'core/device_binding.dart';
 import 'core/github/github_download.dart';
 
-void main() {
+void main() async {
   // Initialize the binding so platform channels (the download directory)
   // can be used before the app is built
   WidgetsFlutterBinding.ensureInitialized();
@@ -32,17 +35,49 @@ void main() {
   // the app startup (all errors are handled inside)
   GitHubDownload.cleanDownloadDir();
 
+  // Load the persisted language selection before the first frame so the
+  // app shows up directly in the right language (no first-frame flicker)
+  await LocaleManager.instance.load();
+
   runApp(const HoozzPlayApp());
 }
 
-class HoozzPlayApp extends StatelessWidget {
+class HoozzPlayApp extends StatefulWidget {
   const HoozzPlayApp({super.key});
+
+  @override
+  State<HoozzPlayApp> createState() => _HoozzPlayAppState();
+}
+
+class _HoozzPlayAppState extends State<HoozzPlayApp> {
+  @override
+  void initState() {
+    super.initState();
+    // Rebuild the MaterialApp when the language selection changes
+    LocaleManager.instance.addListener(_onLocaleChanged);
+  }
+
+  @override
+  void dispose() {
+    LocaleManager.instance.removeListener(_onLocaleChanged);
+    super.dispose();
+  }
+
+  void _onLocaleChanged() {
+    setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Hoozz Play',
       theme: appTheme(),
+      // Internationalization (official Flutter approach): delegates +
+      // supported locales from the generated AppLocalizations; the locale
+      // itself comes from the LocaleManager (null = follow the system)
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
+      supportedLocales: AppLocalizations.supportedLocales,
+      locale: LocaleManager.instance.locale,
       routes: {
         '/': (context) => const HoozzPlayHomePage(),
         '/home': (context) => const HoozzPlayHomePage(),
@@ -51,6 +86,7 @@ class HoozzPlayApp extends StatelessWidget {
         '/tools_esptouch': (context) => const EspTouchPage(),
         '/tools_discover': (context) => const DiscoverPage(),
         '/about': (context) => const HoozzPlayAboutPage(),
+        '/language': (context) => const HoozzPlayLanguagePage(),
         '/author': (context) => const HoozzPlayAuthorPage(),
         '/license': (context) => const HoozzPlayLicensePage(),
         '/vpn': (context) => const HoozzPlayVPNPage(),

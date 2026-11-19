@@ -18,6 +18,7 @@ import 'package:hoozz_play/core/simple_showdialog.dart';
 import 'package:hoozz_play/core/simple_ctrl.dart';
 import 'package:hoozz_play/core/device_storage.dart';
 import 'package:hoozz_play/core/simple_snackbar.dart';
+import 'package:hoozz_play/l10n/app_localizations.dart';
 import 'dart:developer' as developer;
 
 const String _logName = 'Button LED';
@@ -169,7 +170,7 @@ class ButtonLEDDeviceCtrlPageState extends ParameterStatefulState {
             context,
             (route) => route.settings.name == '/button_led',
           );
-          SimpleSnackBar.show(context, 'Abnormal device data', Colors.red);
+          SimpleSnackBar.show(context, AppLocalizations.of(context)!.abnormalDeviceData, Colors.red);
         }
       });
 
@@ -186,7 +187,7 @@ class ButtonLEDDeviceCtrlPageState extends ParameterStatefulState {
             context,
             (route) => route.settings.name == '/button_led',
           );
-          SimpleSnackBar.show(context, 'Device connection failed', Colors.red);
+          SimpleSnackBar.show(context, AppLocalizations.of(context)!.deviceConnectionFailed, Colors.red);
         }
       });
     }
@@ -244,7 +245,7 @@ class ButtonLEDDeviceCtrlPageState extends ParameterStatefulState {
             return;
           }
           _connectingDialog = true;
-          SimpleShowDialog.show(context, 'Device connecting...');
+          SimpleShowDialog.show(context, AppLocalizations.of(context)!.deviceConnecting);
         },
       );
     }
@@ -397,7 +398,7 @@ class ButtonLEDConfigDevicePageState extends ParameterStatefulState {
       ctrlHandle: _simpleCtrlHandle,
       onSavePressed: (infoEdit) {
         if (infoEdit.ctrlReady) {
-          SimpleShowDialog.show(context, "Verifying device...");
+          SimpleShowDialog.show(context, AppLocalizations.of(context)!.verifyingDevice);
           Future<bool> result = () async {
             // Set name
             if (infoEdit.syncName) {
@@ -420,14 +421,14 @@ class ButtonLEDConfigDevicePageState extends ParameterStatefulState {
               );
               SimpleSnackBar.show(
                 context,
-                'Device information saved',
+                AppLocalizations.of(context)!.deviceInformationSaved,
                 Colors.green,
               );
             } else {
               Navigator.pop(context);
               SimpleSnackBar.show(
                 context,
-                'Failed to configure device information',
+                AppLocalizations.of(context)!.configureDeviceFailed,
                 Colors.red,
               );
             }
@@ -438,7 +439,7 @@ class ButtonLEDConfigDevicePageState extends ParameterStatefulState {
           }
           _deviceInfoSave();
           Navigator.pop(context);
-          SimpleSnackBar.show(context, 'Device saved', Colors.green);
+          SimpleSnackBar.show(context, AppLocalizations.of(context)!.deviceSaved, Colors.green);
         }
       },
     );

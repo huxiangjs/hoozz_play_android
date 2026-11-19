@@ -5,12 +5,11 @@
 ///
 
 import 'package:flutter/material.dart';
+import 'package:hoozz_play/l10n/app_localizations.dart';
 import 'package:hoozz_play/themes/theme.dart';
 
 class HoozzPlayToolsPage extends StatefulWidget {
   const HoozzPlayToolsPage({super.key});
-
-  final String title = 'Hoozz Play Tools';
 
   @override
   State<HoozzPlayToolsPage> createState() => _HoozzPlayToolsPageState();
@@ -30,27 +29,31 @@ class _HoozzPlayToolsPageState extends State<HoozzPlayToolsPage> {
     super.initState();
   }
 
-  final List<_ItemInfo> _itemList = [
-    _ItemInfo(
-      'images/logo_espressif.png',
-      'ESP Touch',
-      'Smart configuration network',
-      '/tools_esptouch',
-    ),
-    _ItemInfo(
-      'images/search_icon.png',
-      'Discover',
-      'Discover configured devices',
-      '/tools_discover',
-    ),
-  ];
+  // Built at build time so the item descriptions follow the current
+  // locale (the item names are the English product names, kept as is)
+  List<_ItemInfo> _itemList(AppLocalizations l10n) {
+    return [
+      _ItemInfo(
+        'images/logo_espressif.png',
+        'ESP Touch',
+        l10n.toolsEspTouchDesc,
+        '/tools_esptouch',
+      ),
+      _ItemInfo(
+        'images/search_icon.png',
+        'Discover',
+        l10n.toolsDiscoverDesc,
+        '/tools_discover',
+      ),
+    ];
+  }
 
-  Widget _generateItem(int index) {
+  Widget _generateItem(int index, List<_ItemInfo> itemList) {
     return InkWell(
       onTap: () {
         Navigator.pushNamed(
           context,
-          _itemList[index].page,
+          itemList[index].page,
         );
       },
       child: Card(
@@ -63,7 +66,7 @@ class _HoozzPlayToolsPageState extends State<HoozzPlayToolsPage> {
               Padding(
                 padding: const EdgeInsets.fromLTRB(10, 5, 15, 5),
                 child: Image.asset(
-                  _itemList[index].icon,
+                  itemList[index].icon,
                   fit: BoxFit.cover,
                   width: 40,
                   height: 40,
@@ -75,7 +78,7 @@ class _HoozzPlayToolsPageState extends State<HoozzPlayToolsPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      _itemList[index].name,
+                      itemList[index].name,
                       style: const TextStyle(
                         fontSize: 20,
                         fontFamily: subFontFamily,
@@ -85,7 +88,7 @@ class _HoozzPlayToolsPageState extends State<HoozzPlayToolsPage> {
                     ),
                     const SizedBox(height: 5),
                     Text(
-                      _itemList[index].describe,
+                      itemList[index].describe,
                       style: const TextStyle(
                         fontSize: 10,
                         fontFamily: subFontFamily,
@@ -105,15 +108,18 @@ class _HoozzPlayToolsPageState extends State<HoozzPlayToolsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context)!;
+    List<_ItemInfo> itemList = _itemList(l10n);
+
     return Scaffold(
         appBar: AppBar(
-          title: Text(widget.title),
+          title: Text(l10n.toolsTitle),
         ),
         body: ListView.builder(
-          itemCount: _itemList.length,
+          itemCount: itemList.length,
           padding: const EdgeInsets.fromLTRB(5, 10, 5, 10),
           itemBuilder: (context, index) {
-            return _generateItem(index);
+            return _generateItem(index, itemList);
           },
         ));
   }

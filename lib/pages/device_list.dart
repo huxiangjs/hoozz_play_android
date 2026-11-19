@@ -13,6 +13,7 @@ import 'package:hoozz_play/themes/theme.dart';
 import 'package:hoozz_play/core/simple_ctrl.dart';
 import 'package:hoozz_play/core/device_storage.dart';
 import 'package:hoozz_play/core/parameter_stateful.dart';
+import 'package:hoozz_play/l10n/app_localizations.dart';
 import 'dart:developer' as developer;
 
 const String _logName = 'Device List';
@@ -118,14 +119,14 @@ class _DeviceListHomePageState extends State<DeviceListHomePage> {
           context: context,
           builder: (context) {
             return AlertDialog(
-              title: const Text('Warning'),
-              content: const Text(
-                  'Are you sure you want to delete this device?',
-                  style: TextStyle(color: Colors.red)),
+              title: Text(AppLocalizations.of(context)!.warning),
+              content: Text(
+                  AppLocalizations.of(context)!.deleteDeviceConfirm,
+                  style: const TextStyle(color: Colors.red)),
               actions: <Widget>[
                 // Delete device button
                 TextButton(
-                  child: const Text('Yes'),
+                  child: Text(AppLocalizations.of(context)!.yes),
                   onPressed: () {
                     _delecteDevice(_deviceList[index].id).then((value) {
                       setState(() => _deviceList.removeAt(index));
@@ -135,7 +136,7 @@ class _DeviceListHomePageState extends State<DeviceListHomePage> {
                 ),
                 TextButton(
                   child:
-                      const Text('No', style: TextStyle(color: Colors.black)),
+                      Text(AppLocalizations.of(context)!.no, style: const TextStyle(color: Colors.black)),
                   onPressed: () {
                     Navigator.of(context).pop(true);
                   },
@@ -194,7 +195,9 @@ class _DeviceListHomePageState extends State<DeviceListHomePage> {
                     Padding(
                       padding: const EdgeInsets.fromLTRB(0, 1, 0, 0),
                       child: Text(
-                        deviceOnline ? '[online]' : '[offline]',
+                        deviceOnline
+                            ? AppLocalizations.of(context)!.online
+                            : AppLocalizations.of(context)!.offline,
                         style: TextStyle(
                           fontSize: 16,
                           fontFamily: subFontFamily,
@@ -206,7 +209,7 @@ class _DeviceListHomePageState extends State<DeviceListHomePage> {
                     Padding(
                       padding: const EdgeInsets.fromLTRB(0, 1, 0, 0),
                       child: Text(
-                        'id: $deviceId',
+                        AppLocalizations.of(context)!.deviceId(deviceId),
                         style: const TextStyle(
                           fontSize: 12,
                           fontFamily: subFontFamily,

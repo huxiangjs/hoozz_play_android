@@ -50,10 +50,15 @@ jobs:
     - name: Cache dependencies
       uses: actions/cache@v3
       with:
+        # Only the pub package cache and the Gradle cache are safe to share
+        # across runners. Do NOT cache .dart_tool: its package_config.json
+        # holds absolute paths to the pub cache of the runner that produced
+        # it; on a fresh runner pub then "sees" an in-sync but unusable
+        # package config, which breaks dart format's resolution of package:
+        # includes (e.g. package:flutter_lints/flutter.yaml) during l10n
+        # generation.
         path: |
-          .dart_tool
-          .packages
-          .pub-cache
+          ~/.pub-cache
           ~/.gradle
         key: ${{ runner.os }}-flutter-env-${{ hashFiles('**/pubspec.lock') }}-${{ hashFiles('**/build.gradle') }}
         restore-keys: |
