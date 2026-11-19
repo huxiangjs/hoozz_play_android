@@ -237,19 +237,19 @@ class AppLocalizationsZh extends AppLocalizations {
   String get mirrorLabel => '镜像:';
 
   @override
-  String get emissivityLabel => '发射率:';
+  String get emissivityLabel => 'Emissivity:';
 
   @override
   String errorSettingEmissivity(String value) {
-    return '设置发射率 $value 失败';
+    return 'Error setting emissivity set to $value';
   }
 
   @override
-  String get taShiftLabel => 'Ta 偏移:';
+  String get taShiftLabel => 'Ta shift:';
 
   @override
   String errorSettingTaShift(String value) {
-    return '设置 Ta 偏移 $value 失败';
+    return 'Error setting Ta shift set to $value';
   }
 
   @override
