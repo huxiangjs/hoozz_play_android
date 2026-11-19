@@ -575,4 +575,28 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get sendFailed => '发送失败';
+
+  @override
+  String get gridMlx90640 => '红外测温';
+
+  @override
+  String get gridRemoteSwitch => '远程开关';
+
+  @override
+  String get gridVoiceLed => '语音LED';
+
+  @override
+  String get gridButtonLed => '按键LED';
+
+  @override
+  String get gridSmartIr => '智能红外';
+
+  @override
+  String get gridSensor => '传感器';
+
+  @override
+  String get gridPwdSync => '密码同步';
+
+  @override
+  String get gridSwitch => '开关';
 }

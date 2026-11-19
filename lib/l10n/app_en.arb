@@ -434,5 +434,13 @@
   "enterKeyName": "Enter key name",
   "saved": "Saved",
   "saveFailed": "Save failed",
-  "sendFailed": "Send failed"
+  "sendFailed": "Send failed",
+  "gridMlx90640": "MLX90640",
+  "gridRemoteSwitch": "REMOTE SW",
+  "gridVoiceLed": "VOICE LED",
+  "gridButtonLed": "BUTTON LED",
+  "gridSmartIr": "SMART IR",
+  "gridSensor": "SENSOR",
+  "gridPwdSync": "PWD SYNC",
+  "gridSwitch": "SWITCH"
 }

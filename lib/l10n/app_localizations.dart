@@ -1105,6 +1105,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Send failed'**
   String get sendFailed;
+
+  /// No description provided for @gridMlx90640.
+  ///
+  /// In en, this message translates to:
+  /// **'MLX90640'**
+  String get gridMlx90640;
+
+  /// No description provided for @gridRemoteSwitch.
+  ///
+  /// In en, this message translates to:
+  /// **'REMOTE SW'**
+  String get gridRemoteSwitch;
+
+  /// No description provided for @gridVoiceLed.
+  ///
+  /// In en, this message translates to:
+  /// **'VOICE LED'**
+  String get gridVoiceLed;
+
+  /// No description provided for @gridButtonLed.
+  ///
+  /// In en, this message translates to:
+  /// **'BUTTON LED'**
+  String get gridButtonLed;
+
+  /// No description provided for @gridSmartIr.
+  ///
+  /// In en, this message translates to:
+  /// **'SMART IR'**
+  String get gridSmartIr;
+
+  /// No description provided for @gridSensor.
+  ///
+  /// In en, this message translates to:
+  /// **'SENSOR'**
+  String get gridSensor;
+
+  /// No description provided for @gridPwdSync.
+  ///
+  /// In en, this message translates to:
+  /// **'PWD SYNC'**
+  String get gridPwdSync;
+
+  /// No description provided for @gridSwitch.
+  ///
+  /// In en, this message translates to:
+  /// **'SWITCH'**
+  String get gridSwitch;
 }
 
 class _AppLocalizationsDelegate

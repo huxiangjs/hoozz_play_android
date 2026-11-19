@@ -183,5 +183,13 @@
   "enterKeyName": "输入按键名称",
   "saved": "已保存",
   "saveFailed": "保存失败",
-  "sendFailed": "发送失败"
+  "sendFailed": "发送失败",
+  "gridMlx90640": "红外测温",
+  "gridRemoteSwitch": "远程开关",
+  "gridVoiceLed": "语音LED",
+  "gridButtonLed": "按键LED",
+  "gridSmartIr": "智能红外",
+  "gridSensor": "传感器",
+  "gridPwdSync": "密码同步",
+  "gridSwitch": "开关"
 }

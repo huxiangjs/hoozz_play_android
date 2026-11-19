@@ -581,4 +581,28 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get sendFailed => 'Send failed';
+
+  @override
+  String get gridMlx90640 => 'MLX90640';
+
+  @override
+  String get gridRemoteSwitch => 'REMOTE SW';
+
+  @override
+  String get gridVoiceLed => 'VOICE LED';
+
+  @override
+  String get gridButtonLed => 'BUTTON LED';
+
+  @override
+  String get gridSmartIr => 'SMART IR';
+
+  @override
+  String get gridSensor => 'SENSOR';
+
+  @override
+  String get gridPwdSync => 'PWD SYNC';
+
+  @override
+  String get gridSwitch => 'SWITCH';
 }
