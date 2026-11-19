@@ -185,11 +185,11 @@
   "saveFailed": "保存失败",
   "sendFailed": "发送失败",
   "gridMlx90640": "红外测温",
-  "gridRemoteSwitch": "远程开关",
-  "gridVoiceLed": "语音LED",
-  "gridButtonLed": "按键LED",
-  "gridSmartIr": "智能红外",
+  "gridRemoteSwitch": "远程按钮",
+  "gridVoiceLed": "语音灯",
+  "gridButtonLed": "按键灯",
+  "gridSmartIr": "红外遥控器",
   "gridSensor": "传感器",
-  "gridPwdSync": "密码同步",
+  "gridPwdSync": "密码同步器",
   "gridSwitch": "开关"
 }
